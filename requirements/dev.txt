@@ -1,0 +1,16 @@
+-r base.txt
+autoflake==1.4  # auto-remove unused imports (to prevent flake8 from crying about it)
+black==21.9b0
+coverage[toml]==6.1.1
+flake8==3.9.2
+hypothesis==6.24.2  # (mathematical) property-based testing
+isort==5.10.0  # sort imports
+mutmut==2.2.0  # mutation testing the unit tests
+mypy==0.920
+pre-commit==2.15.0  # for running hooks before committing code
+pytest-integration==0.2.2 # for @mark additions
+pytest-mock==3.6.1
+pytest==6.2.4
+pyupgrade==2.29.0  # to make sure code conforms to certain minimal version
+tox==3.24.4
+types-requests==2.26.2  # typing for mypy

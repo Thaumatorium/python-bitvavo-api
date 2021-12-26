@@ -1,0 +1,109 @@
+[build-system]
+requires = ["setuptools >= 60.1.0", "wheel >= 0.37.1"]
+build-backend = "setuptools.build_meta"
+
+[tool.semantic_release]
+version_variable = ["setup.py:__version__"]
+
+[tool.mypy]
+# https://mypy.readthedocs.io/en/stable/config_file.html#confval-exclude
+# exclude = ""
+namespace_packages = false
+explicit_package_bases = false
+ignore_missing_imports = false
+follow_imports = "normal"        # possible values are normal, silent, skip and error
+follow_imports_for_stubs = false
+# python_executable=""
+no_site_packages = true
+no_silence_site_packages = false
+# Disallow dynamic typing¶
+disallow_any_unimported = false
+disallow_any_expr = false
+disallow_any_decorated = false
+disallow_any_explicit = false
+disallow_any_generics = false
+disallow_subclassing_any = false
+disallow_untyped_calls = false
+# Untyped definitions and calls¶
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = false
+disallow_untyped_decorators = false
+# None and Optional handling¶
+no_implicit_optional = false
+strict_optional = true
+# Configuring warnings¶
+warn_redundant_casts = false
+warn_unused_ignores = false
+warn_no_return = false
+warn_return_any = false
+warn_unreachable = false
+# Suppressing errors¶
+show_none_errors = true
+ignore_errors = false
+# Miscellaneous strictness flags¶
+allow_untyped_globals = false
+allow_redefinition = false
+local_partial_types = false
+implicit_reexport = true
+strict_equality = false
+strict = false
+# Configuring error messages¶
+show_error_context = false
+show_column_numbers = false
+show_error_codes = false
+pretty = false
+color_output = true
+error_summary = true
+show_absolute_path = false
+# Incremental mode¶
+incremental = true
+cache_dir = ".mypy_cache"
+sqlite_cache = false
+cache_fine_grained = false
+skip_version_check = false
+skip_cache_mtime_checks = false
+# Advanced options¶
+pdb = false
+show_traceback = false
+raise_exceptions = false
+warn_incomplete_stub = false
+
+# PROGRAM SETTINGS
+[tool.coverage.run]
+branch = true
+source = [
+    "python_bitvavo_api",
+] # I don't know why this shouldn't be "src/python_bitvavo_api", but that value doesn't work...
+parallel = true
+relative_files = true
+
+[tool.coverage.paths]
+source = ["src/python_bitvavo_api", ".tox/py3*/lib/python3.*/site-packages/python_bitvavo_api"]
+
+[tool.coverage.report]
+# fail_under = 100
+precision = 0
+# show_missing = True
+skip_covered = true
+skip_empty = true
+sort = "Cover"
+
+[tool.black]
+line-length = 120
+include = "(src|tests)/.*.py"
+
+[tool.isort]
+line_length = 120
+profile = "black"
+src_paths = ["src", "tests"]
+
+[tool.pytest.ini_options]
+addopts = "--durations-min=1 --verbosity=2 --no-header --show-capture=all"
+# addopts = "--durations-min=1 --stepwise --verbosity=2 --no-header --show-capture=all"
+# addopts = "--durations=10 --durations-min=1 --stepwise --verbosity=1 --no-header"
+testpaths = ["tests"]
+markers = ["no_cover: some pytest-integration default mark that's not known?."]
+python_classes = "Test*"
+python_files = "test_*.py"
+python_functions = "test_*"

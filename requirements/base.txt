@@ -1,0 +1,4 @@
+python-dotenv==0.19.2
+python-semantic-release==7.23.0
+requests==2.26.0
+websocket==0.2.1

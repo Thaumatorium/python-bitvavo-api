@@ -1,4 +1,22 @@
-.DS_Store
-setup.py
-dist
-python_bitvavo_api.egg-info
+/*
+
+# dirs
+!requirements
+!src
+!tests
+
+# files
+!.gitignore
+!.pre-commit-config.yaml
+!CHANGELOG.md
+!LICENSE.txt
+!MANIFEST.in
+!pyproject.toml
+!README.md
+!setup.py
+!tox.ini
+
+# re-ignore recursively
+__pycache__
+*.egg-info
+*.pyc

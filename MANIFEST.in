@@ -1,0 +1,2 @@
+# This stupid-ass file is needed by setuptools to include certain files for the distribution package
+recursive-include requirements *.txt
