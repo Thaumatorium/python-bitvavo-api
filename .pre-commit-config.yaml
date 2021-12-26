@@ -37,3 +37,11 @@ repos:
   #   hooks:
   #     - id: flake8
   #       exclude: ^notebooks/
+  - repo: https://github.com/executablebooks/mdformat
+    rev: 0.7.11
+    hooks:
+      - id: mdformat
+        # Optionally add plugins
+        additional_dependencies:
+          - mdformat-gfm
+          - mdformat-black
