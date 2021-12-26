@@ -12,8 +12,9 @@ with (HERE / "requirements" / "base.txt").open(mode="r") as requirements_file:
 with (HERE / "README.md").open(mode="r") as readme_file:
     readme = readme_file.read()
 
+# TODO(NostraDavid) add a classifier after testing several versions; maybe change `python_requires`
 setup(
-    author="Bitvavo BV and NostraDavid",
+    author="Bitvavo BV (original code) and NostraDavid (rebuild)",
     description="This is an upgraded version of the Python API provided by ",
     include_package_data=True,
     install_requires=requirements,
