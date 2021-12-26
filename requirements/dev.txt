@@ -1,10 +1,14 @@
 -r base.txt
 autoflake==1.4  # auto-remove unused imports (to prevent flake8 from crying about it)
 black==21.9b0
+bump2version==1.0.1  # for version management of the lib
+check-manifest==0.47  # to check and create the MANIFEST.in file (for the source distribution)
+cookiecutter==1.7.3  # cookiecutter gh:ionelmc/cookiecutter-pylibrary
 coverage[toml]==6.1.1
 flake8==3.9.2
 hypothesis==6.24.2  # (mathematical) property-based testing
 isort==5.10.0  # sort imports
+mkdocs==1.2.3  # for markdown documentation
 mutmut==2.2.0  # mutation testing the unit tests
 mypy==0.920
 pre-commit==2.15.0  # for running hooks before committing code
