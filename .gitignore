@@ -3,6 +3,7 @@
 # dirs
 !.github
 !requirements
+!scripts
 !src
 !tests
 
