@@ -73,13 +73,13 @@ warn_incomplete_stub = false
 [tool.coverage.run]
 branch = true
 source = [
-    "python_bitvavo_api",
-] # I don't know why this shouldn't be "src/python_bitvavo_api", but that value doesn't work...
+    "bitvavo_api_upgraded",
+] # I don't know why this shouldn't be "src/bitvavo_api_upgraded", but that value doesn't work...
 parallel = true
 relative_files = true
 
 [tool.coverage.paths]
-source = ["src/python_bitvavo_api", ".tox/py3*/lib/python3.*/site-packages/python_bitvavo_api"]
+source = ["src/bitvavo_api_upgraded", ".tox/py3*/lib/python3.*/site-packages/bitvavo_api_upgraded"]
 
 [tool.coverage.report]
 # fail_under = 100

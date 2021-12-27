@@ -4,7 +4,7 @@ import time
 
 from dotenv import load_dotenv
 
-from python_bitvavo_api.bitvavo import Bitvavo
+from bitvavo_api_upgraded.bitvavo import Bitvavo
 
 """
 * This is an example utilising all functions of the python Bitvavo API wrapper.
