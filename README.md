@@ -1,5 +1,31 @@
 <h1>WARNING: NOT THE OFFICIAL API</h1>
 
+## Versioning
+
+Copy the following block to CHANGELOG.md and add all information since last version bump
+
+```markdown
+## unreleased
+
+### Added
+...
+
+### Changed
+...
+
+### Removed
+...
+```
+
+After that, run `bump2version (major|minor|patch)` to automatically replace `unreleased` with the new version number,
+and also automatically tag and commit (with tag) to release a new version
+
+## Last note
+
+*below this line is the old README.md*
+
+______________________________________________________________________
+
 <p align="center">
   <br>
   <a href="https://bitvavo.com"><img src="https://bitvavo.com/assets/static/ext/logo-shape.svg" width="100" title="Bitvavo Logo"></a>
@@ -71,7 +97,7 @@ The general convention used in all functions (both REST and websockets), is that
 The API key and secret are required for private calls and optional for public calls. The access window and debugging parameter are optional for all calls. The access window is used to determine whether the request arrived within time, the value is specified in milliseconds. You can use the [time](https://github.com/bitvavo/python-bitvavo-api#get-time) function to synchronize your time to our server time if errors arise. REST url and WS url can be used to set a different endpoint (for testing purposes). Debugging should be set to true when you want to log additional information and full responses. Any parameter can be omitted, private functions will return an error when the api key and secret have not been set.
 
 ```python
-from python_bitvavo_api.bitvavo import Bitvavo
+from bitvavo_api_upgraded.bitvavo import Bitvavo
 
 bitvavo = Bitvavo(
     {
