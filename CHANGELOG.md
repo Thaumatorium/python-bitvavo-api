@@ -1,6 +1,6 @@
 # Changelog
 
-## [unreleased]
+## [v1.0.2] - 2021-12-27
 
 Everything from since NostraDavid started this project; version `1.0.0` and `1.0.1` did not have `bump2version` working well yet, which is why they do not have separate entries
 
