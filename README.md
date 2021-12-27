@@ -13,7 +13,7 @@ I'm using semantic versioning, which means that changes mean this:
 Copy the following block to CHANGELOG.md and add all information since last version bump
 
 ```markdown
-## unreleased
+## [unreleased]
 
 ### Added
 ...
