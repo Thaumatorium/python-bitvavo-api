@@ -1,20 +1,22 @@
 -r base.txt
 autoflake==1.4  # auto-remove unused imports (to prevent flake8 from crying about it)
-black==21.9b0
+black==21.9b0  # opinionated formatter
 bump2version==1.0.1  # for version management of the lib
 check-manifest==0.47  # to check and create the MANIFEST.in file (for the source distribution)
 cookiecutter==1.7.3  # cookiecutter gh:ionelmc/cookiecutter-pylibrary
 coverage[toml]==6.1.1
-flake8==3.9.2
+flake8==3.9.2  # linter for python. I prefer it over pylint due to extensibility
 hypothesis==6.24.2  # (mathematical) property-based testing
 isort==5.10.0  # sort imports
 mkdocs==1.2.3  # for markdown documentation
 mutmut==2.2.0  # mutation testing the unit tests
-mypy==0.920
+mypy==0.920  # will shout at you if 
 pre-commit==2.15.0  # for running hooks before committing code
 pytest-integration==0.2.2 # for @mark additions
 pytest-mock==3.6.1
-pytest==6.2.4
+pytest==6.2.4  # you can run `pytest` to run the unit tests; will also be run by `tox` :)
 pyupgrade==2.29.0  # to make sure code conforms to certain minimal version
-tox==3.24.4
+setuptools==60.1.0  # for building the application
+tox==3.24.4  # run `tox` to test everything
 types-requests==2.26.2  # typing for mypy
+wheel==0.37.1  # for building the application
