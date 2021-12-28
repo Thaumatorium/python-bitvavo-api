@@ -15,7 +15,7 @@ with (HERE / "README.md").open(mode="r") as readme_file:
 # TODO(NostraDavid) add a classifier after testing several versions; maybe change `python_requires`
 setup(
     author="Bitvavo BV (original code) and NostraDavid (rebuild)",
-    description="Bitvavo API",
+    description="A unit-tested fork of the Bitvavo API",
     include_package_data=True,
     install_requires=requirements,
     license="ISC License",
