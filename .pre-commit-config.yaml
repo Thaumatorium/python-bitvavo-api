@@ -49,3 +49,12 @@ repos:
     rev: 0.1.0
     hooks:
       - id: yamlfmt
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.26.3
+    hooks:
+      - id: yamllint
+        name: yamllint
+        description: This hook runs yamllint.
+        entry: yamllint
+        language: python
+        types: [file, yaml]
