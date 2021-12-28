@@ -1,5 +1,11 @@
 # Changelog
 
+## [unreleased]
+
+### Changed
+
+- when there's a version bump, Github should push to PyPi now (not only to https://test.pypi.org)
+
 ## [v1.1.1] - 2021-12-28
 
 ### Changed
