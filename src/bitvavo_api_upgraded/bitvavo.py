@@ -1,23 +1,28 @@
-import datetime
 import hashlib
 import hmac
 import json
+import logging
 import threading
 import time
+from datetime import datetime
 
 import requests  # type: ignore
 import websocket  # type: ignore
 
 debugging = False
 
+logger = logging.getLogger("bitvavo-api-upgraded")
+
 
 def debugToConsole(message):
     if debugging:
-        print(str(datetime.datetime.now().time())[:-7] + " DEBUG: " + message)
+        print(message)
+        logger.info(message)
 
 
 def errorToConsole(message):
-    print(str(datetime.datetime.now().time())[:-7] + " ERROR: " + message)
+    print(message)
+    logger.error(message)
 
 
 def createSignature(timestamp, method, url, body, APISECRET):
@@ -108,7 +113,7 @@ class rateLimitThread(threading.Thread):
             debugToConsole("Ban should have been lifted, resetting rate limit to 1000.")
         else:
             timeToWait = (self.bitvavo.rateLimitReset / 1000) - time.time()
-            debugToConsole("Ban took longer than expected, sleeping again for " + str(timeToWait) + " seconds.")
+            debugToConsole(f"Ban took longer than expected, sleeping again for {timeToWait} seconds.")
             self.waitForReset(timeToWait)
 
     def run(self):
@@ -128,9 +133,7 @@ class receiveThread(threading.Thread):
                 self.wsObject.reconnect = True
                 self.wsObject.authenticated = False
                 time.sleep(self.wsObject.reconnectTimer)
-                debugToConsole(
-                    "we have just set reconnect to true and have waited for " + str(self.wsObject.reconnectTimer),
-                )
+                debugToConsole(f"we have just set reconnect to true and have waited for {self.wsObject.reconnectTimer}")
                 self.wsObject.reconnectTimer = self.wsObject.reconnectTimer * 2
         except KeyboardInterrupt:
             debugToConsole("We caught keyboard interrupt in the websocket thread.")
@@ -410,18 +413,18 @@ class Bitvavo:
             ws.send(message)
             debugToConsole("SENT: " + message)
 
-        def on_message(ws, msg):
+        def on_message(self, ws, msg):
             debugToConsole("RECEIVED: " + msg)
             msg = json.loads(msg)
-            callbacks = ws.callbacks
+            callbacks = self.callbacks
 
             if "error" in msg:
                 if msg["errorCode"] == 105:
-                    ws.bitvavo.updateRateLimit(msg)
+                    self.bitvavo.updateRateLimit(msg)
                 if "error" in callbacks:
                     callbacks["error"](msg)
                 else:
-                    errorToConsole(json.dumps(msg, indent=2))
+                    errorToConsole(msg)
 
             if "action" in msg:
                 if msg["action"] == "getTime":
@@ -472,13 +475,13 @@ class Bitvavo:
                     market = msg["response"]["market"]
                     if "book" in callbacks:
                         callbacks["book"](msg["response"])
-                    if ws.keepBookCopy:
+                    if self.keepBookCopy:
                         if market in callbacks["subscriptionBook"]:
-                            callbacks["subscriptionBook"][market](ws, msg)
+                            callbacks["subscriptionBook"][market](self, msg)
 
             elif "event" in msg:
                 if msg["event"] == "authenticate":
-                    ws.authenticated = True
+                    self.authenticated = True
                 elif msg["event"] == "fill":
                     market = msg["market"]
                     callbacks["subscriptionAccount"][market](msg)
@@ -500,21 +503,22 @@ class Bitvavo:
                     if "subscriptionBookUpdate" in callbacks:
                         if market in callbacks["subscriptionBookUpdate"]:
                             callbacks["subscriptionBookUpdate"][market](msg)
-                    if ws.keepBookCopy:
+                    if self.keepBookCopy:
                         if market in callbacks["subscriptionBook"]:
-                            callbacks["subscriptionBook"][market](ws, msg)
+                            callbacks["subscriptionBook"][market](self, msg)
                 elif msg["event"] == "trade":
                     market = msg["market"]
                     if "subscriptionTrades" in callbacks:
                         callbacks["subscriptionTrades"][market](msg)
 
-        def on_error(ws, error):
-            if "error" in callbacks:
-                ws.callbacks["error"](error)
+        def on_error(self, ws, error):
+            if "error" in self.callbacks:
+                self.callbacks["error"](error)
             else:
                 errorToConsole(error)
 
-        def on_close(self):
+        def on_close(self, ws):
+            # TODO(NostraDavid) check if this exit() does anything
             self.receiveThread.exit()
             debugToConsole("Closed Websocket.")
 
@@ -546,7 +550,7 @@ class Bitvavo:
                 for market in self.callbacks["subscriptionBookUser"]:
                     self.subscriptionBook(market, self.callbacks["subscriptionBookUser"][market])
 
-        def on_open(self):
+        def on_open(self, ws):
             now = int(time.time() * 1000)
             self.open = True
             self.reconnectTimer = 0.5
@@ -564,7 +568,7 @@ class Bitvavo:
                     ),
                 )
             if self.reconnect:
-                debugToConsole("we started reconnecting " + str(self.checkReconnect))
+                debugToConsole("we started reconnecting")
                 thread = threading.Thread(target=self.checkReconnect)
                 thread.start()
 
