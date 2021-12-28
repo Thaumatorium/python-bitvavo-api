@@ -1,5 +1,11 @@
 # Changelog
 
+## [unreleased]
+
+### Changed
+
+- fix the workflow (hopefully) - if I did, then this is the last you'll see about that
+
 ## [v1.3.2] - 2021-12-29
 
 ### Changed
