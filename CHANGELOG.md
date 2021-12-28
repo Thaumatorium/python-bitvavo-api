@@ -1,5 +1,11 @@
 # Changelog
 
+## [unreleased]
+
+### Changed
+
+- easy fix to enable publishing to PyPi: disable the `if` that checks for tags 😅
+
 ## [v1.3.0] - 2021-12-28
 
 ### Changed
