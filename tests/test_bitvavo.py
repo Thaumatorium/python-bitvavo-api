@@ -4,7 +4,6 @@ those values can be cast to (as quite a few responses return strings which are o
 """
 import json
 import logging
-import os
 from time import sleep
 
 from pytest import mark
