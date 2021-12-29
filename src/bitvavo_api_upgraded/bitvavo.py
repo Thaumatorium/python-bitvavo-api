@@ -2,29 +2,31 @@ import hashlib
 import hmac
 import json
 import logging
-import threading
-import time
+from threading import Thread
+from time import sleep, time
+from typing import Any, Callable, Dict, List, Union
 
-import requests  # type: ignore
-import websocket  # type: ignore
+import websocket as ws_lib  # type: ignore
+from requests import delete, get, post, put  # type: ignore
+from websocket import WebSocketApp  # missing stubs for WebSocketApp
 
-debugging = False
+debugging: bool = False
 
 logger = logging.getLogger("bitvavo-api-upgraded")
 
 
-def debugToConsole(message):
+def debugToConsole(message: Any) -> None:
     if debugging:
         print(message)
         logger.info(message)
 
 
-def errorToConsole(message):
+def errorToConsole(message: Any) -> None:
     print(message)
     logger.error(message)
 
 
-def createSignature(timestamp, method, url, body, APISECRET):
+def createSignature(timestamp: int, method: str, url: str, body: dict, APISECRET: str) -> str:
     string = str(timestamp) + method + "/v2" + url
     if len(body.keys()) != 0:
         string += json.dumps(body, separators=(",", ":"))
@@ -32,7 +34,7 @@ def createSignature(timestamp, method, url, body, APISECRET):
     return signature
 
 
-def createPostfix(options):
+def createPostfix(options: dict) -> str:
     params = []
     for key in options:
         params.append(key + "=" + str(options[key]))
@@ -42,21 +44,25 @@ def createPostfix(options):
     return postfix
 
 
-def asksCompare(a, b):
+def asksCompare(a: float, b: float) -> bool:
     if a < b:
         return True
     return False
 
 
-def bidsCompare(a, b):
+def bidsCompare(a: float, b: float) -> bool:
     if a > b:
         return True
     return False
 
 
-def sortAndInsert(book, update, compareFunc):
+def sortAndInsert(
+    book: List[List[str]],
+    update: List[List[str]],
+    compareFunc: Callable[[float, float], bool],
+) -> List[List[str]]:
     for updateEntry in update:
-        entrySet = False
+        entrySet: bool = False
         for j in range(len(book)):
             bookItem = book[j]
             if compareFunc(float(updateEntry[0]), float(bookItem[0])):
@@ -77,7 +83,8 @@ def sortAndInsert(book, update, compareFunc):
     return book
 
 
-def processLocalBook(ws, message):
+def processLocalBook(ws: "Bitvavo.websocket", message: Dict[str, Any]) -> None:
+    market: str = ""
     if "action" in message:
         if message["action"] == "getBook":
             market = message["response"]["market"]
@@ -90,63 +97,68 @@ def processLocalBook(ws, message):
             market = message["market"]
 
             if message["nonce"] != ws.localBook[market]["nonce"] + 1:
-                ws.makeLocalBook(market, ws.callbacks["localBookUser"][market])
+                # I think I've fixed this, by looking at the other Bitvavo repos (search for 'nonce' or '!=' 😆)
+                ws.subscriptionBook(market, ws.callbacks[market])
                 return
             ws.localBook[market]["bids"] = sortAndInsert(ws.localBook[market]["bids"], message["bids"], bidsCompare)
             ws.localBook[market]["asks"] = sortAndInsert(ws.localBook[market]["asks"], message["asks"], asksCompare)
             ws.localBook[market]["nonce"] = message["nonce"]
 
-    ws.callbacks["subscriptionBookUser"][market](ws.localBook[market])
+    if market != "":
+        ws.callbacks["subscriptionBookUser"][market](ws.localBook[market])
 
 
-class rateLimitThread(threading.Thread):
-    def __init__(self, reset, bitvavo):
+class rateLimitThread(Thread):
+    def __init__(self, reset: float, bitvavo: "Bitvavo"):
         self.timeToWait = reset
         self.bitvavo = bitvavo
-        threading.Thread.__init__(self)
+        Thread.__init__(self)
 
-    def waitForReset(self, waitTime):
-        time.sleep(waitTime)
-        if time.time() < self.bitvavo.rateLimitReset:
+    def waitForReset(self, waitTime: float) -> None:
+        sleep(waitTime)
+        if time() < self.bitvavo.rateLimitReset:
             self.bitvavo.rateLimitRemaining = 1000
             debugToConsole("Ban should have been lifted, resetting rate limit to 1000.")
         else:
-            timeToWait = (self.bitvavo.rateLimitReset / 1000) - time.time()
+            timeToWait = (self.bitvavo.rateLimitReset / 1000) - time()
             debugToConsole(f"Ban took longer than expected, sleeping again for {timeToWait} seconds.")
             self.waitForReset(timeToWait)
 
-    def run(self):
+    def run(self) -> None:
         self.waitForReset(self.timeToWait)
 
 
-class receiveThread(threading.Thread):
-    def __init__(self, ws, wsObject):
+class receiveThread(Thread):
+    def __init__(self, ws: WebSocketApp, wsObject: "Bitvavo.websocket"):  # type: ignore
         self.ws = ws
         self.wsObject = wsObject
-        threading.Thread.__init__(self)
+        Thread.__init__(self)
 
-    def run(self):
+    def run(self) -> None:
         try:
             while self.wsObject.keepAlive:
                 self.ws.run_forever()
                 self.wsObject.reconnect = True
                 self.wsObject.authenticated = False
-                time.sleep(self.wsObject.reconnectTimer)
+                sleep(self.wsObject.reconnectTimer)
                 debugToConsole(f"we have just set reconnect to true and have waited for {self.wsObject.reconnectTimer}")
                 self.wsObject.reconnectTimer = self.wsObject.reconnectTimer * 2
         except KeyboardInterrupt:
             debugToConsole("We caught keyboard interrupt in the websocket thread.")
 
+    def stop(self) -> None:
+        self.wsObject.keepAlive = False
+
 
 class Bitvavo:
-    def __init__(self, options={}):
-        self.base = "https://api.bitvavo.com/v2"
-        self.wsUrl = "wss://ws.bitvavo.com/v2/"
-        self.ACCESSWINDOW = None
-        self.APIKEY = ""
-        self.APISECRET = ""
-        self.rateLimitRemaining = 1000
-        self.rateLimitReset = 0
+    def __init__(self, options: Dict = {}):
+        self.base: str = "https://api.bitvavo.com/v2"
+        self.wsUrl: str = "wss://ws.bitvavo.com/v2/"
+        self.ACCESSWINDOW: int = 0
+        self.APIKEY: str = ""
+        self.APISECRET: str = ""
+        self.rateLimitRemaining: int = 1000
+        self.rateLimitReset: int = 0
         global debugging
         debugging = False
         for key in options:
@@ -162,18 +174,19 @@ class Bitvavo:
                 self.base = options[key]
             elif key.lower() == "wsurl":
                 self.wsUrl = options[key]
-        if self.ACCESSWINDOW == None:
+        if self.ACCESSWINDOW == 0:
             self.ACCESSWINDOW = 10000
 
-    def getRemainingLimit(self):
+    def getRemainingLimit(self) -> int:
         return self.rateLimitRemaining
 
-    def updateRateLimit(self, response):
+    def updateRateLimit(self, response: Union[Dict[str, Any], Any]) -> None:
+        # The response: Any is for a CaseInsensitiveDict that's inserted, but mypy was complaining about
         if "errorCode" in response:
             if response["errorCode"] == 105:
                 self.rateLimitRemaining = 0
                 self.rateLimitReset = int(response["error"].split(" at ")[1].split(".")[0])
-                timeToWait = (self.rateLimitReset / 1000) - time.time()
+                timeToWait = (self.rateLimitReset / 1000) - time()
                 if not hasattr(self, "rateLimitThread"):
                     self.rateLimitThread = rateLimitThread(timeToWait, self)
                     self.rateLimitThread.daemon = True
@@ -183,16 +196,16 @@ class Bitvavo:
             self.rateLimitRemaining = int(response["bitvavo-ratelimit-remaining"])
         if "bitvavo-ratelimit-resetat" in response:
             self.rateLimitReset = int(response["bitvavo-ratelimit-resetat"])
-            timeToWait = (self.rateLimitReset / 1000) - time.time()
+            timeToWait = (self.rateLimitReset / 1000) - time()
             if not hasattr(self, "rateLimitThread"):
                 self.rateLimitThread = rateLimitThread(timeToWait, self)
                 self.rateLimitThread.daemon = True
                 self.rateLimitThread.start()
 
-    def publicRequest(self, url):
-        debugToConsole("REQUEST: " + url)
+    def publicRequest(self, url: str) -> Any:
+        debugToConsole(f"REQUEST: {url}")
         if self.APIKEY != "":
-            now = int(time.time() * 1000)
+            now = int(time() * 1000)
             sig = createSignature(now, "GET", url.replace(self.base, ""), {}, self.APISECRET)
             headers = {
                 "Bitvavo-Access-Key": self.APIKEY,
@@ -200,17 +213,18 @@ class Bitvavo:
                 "Bitvavo-Access-Timestamp": str(now),
                 "Bitvavo-Access-Window": str(self.ACCESSWINDOW),
             }
-            r = requests.get(url, headers=headers)
+            r = get(url, headers=headers)
         else:
-            r = requests.get(url)
+            r = get(url)
         if "error" in r.json():
             self.updateRateLimit(r.json())
         else:
             self.updateRateLimit(r.headers)
         return r.json()
 
-    def privateRequest(self, endpoint, postfix, body={}, method="GET"):
-        now = int(time.time() * 1000)
+    def privateRequest(self, endpoint: str, postfix: str, body: Dict, method: str = "GET") -> Any:
+        # if this method breaks: add `= {}` after `body:Dict``
+        now = int(time() * 1000)
         sig = createSignature(now, method, (endpoint + postfix), body, self.APISECRET)
         url = self.base + endpoint + postfix
         headers = {
@@ -220,61 +234,61 @@ class Bitvavo:
             "Bitvavo-Access-Window": str(self.ACCESSWINDOW),
         }
         debugToConsole("REQUEST: " + url)
-        if method == "GET":
-            r = requests.get(url, headers=headers)
-        elif method == "DELETE":
-            r = requests.delete(url, headers=headers)
+        if method == "DELETE":
+            r = delete(url, headers=headers)
         elif method == "POST":
-            r = requests.post(url, headers=headers, json=body)
+            r = post(url, headers=headers, json=body)
         elif method == "PUT":
-            r = requests.put(url, headers=headers, json=body)
+            r = put(url, headers=headers, json=body)
+        else:  # method == "GET"
+            r = get(url, headers=headers)
         if "error" in r.json():
             self.updateRateLimit(r.json())
         else:
             self.updateRateLimit(r.headers)
         return r.json()
 
-    def time(self):
+    def time(self) -> Any:
         return self.publicRequest(self.base + "/time")
 
     # options: market
-    def markets(self, options):
+    def markets(self, options: Dict) -> Any:
         postfix = createPostfix(options)
         return self.publicRequest(self.base + "/markets" + postfix)
 
     # options: symbol
-    def assets(self, options):
+    def assets(self, options: Dict) -> Any:
         postfix = createPostfix(options)
         return self.publicRequest(self.base + "/assets" + postfix)
 
     # options: depth
-    def book(self, symbol, options):
+    def book(self, symbol: str, options: Dict) -> Any:
         postfix = createPostfix(options)
         return self.publicRequest(self.base + "/" + symbol + "/book" + postfix)
 
     # options: limit, start, end, tradeIdFrom, tradeIdTo
-    def publicTrades(self, symbol, options):
+    def publicTrades(self, symbol: str, options: Dict) -> Any:
         postfix = createPostfix(options)
         return self.publicRequest(self.base + "/" + symbol + "/trades" + postfix)
 
     # options: limit, start, end
-    def candles(self, symbol, interval, options):
+    def candles(self, symbol: str, interval: str, options: Dict) -> Any:
         options["interval"] = interval
         postfix = createPostfix(options)
         return self.publicRequest(self.base + "/" + symbol + "/candles" + postfix)
 
     # options: market
-    def tickerPrice(self, options):
+    def tickerPrice(self, options: Dict) -> Any:
         postfix = createPostfix(options)
         return self.publicRequest(self.base + "/ticker/price" + postfix)
 
     # options: market
-    def tickerBook(self, options):
+    def tickerBook(self, options: Dict) -> Any:
         postfix = createPostfix(options)
         return self.publicRequest(self.base + "/ticker/book" + postfix)
 
     # options: market
-    def ticker24h(self, options):
+    def ticker24h(self, options: Dict) -> Any:
         postfix = createPostfix(options)
         return self.publicRequest(self.base + "/ticker/24h" + postfix)
 
@@ -282,90 +296,90 @@ class Bitvavo:
     #                           stopLoss/takeProfit:(amount, amountQuote, disableMarketProtection, triggerType, triggerReference, triggerAmount)
     #                           stopLossLimit/takeProfitLimit:(amount, price, postOnly, triggerType, triggerReference, triggerAmount)
     #                           all orderTypes: timeInForce, selfTradePrevention, responseRequired
-    def placeOrder(self, market, side, orderType, body):
+    def placeOrder(self, market: str, side: str, orderType: str, body: Dict) -> Any:
         body["market"] = market
         body["side"] = side
         body["orderType"] = orderType
         return self.privateRequest("/order", "", body, "POST")
 
-    def getOrder(self, market, orderId):
+    def getOrder(self, market: str, orderId: str) -> Any:
         postfix = createPostfix({"market": market, "orderId": orderId})
         return self.privateRequest("/order", postfix, {}, "GET")
 
     # Optional parameters: limit:(amount, amountRemaining, price, timeInForce, selfTradePrevention, postOnly)
     #          untriggered stopLoss/takeProfit:(amount, amountQuote, disableMarketProtection, triggerType, triggerReference, triggerAmount)
     #                      stopLossLimit/takeProfitLimit: (amount, price, postOnly, triggerType, triggerReference, triggerAmount)
-    def updateOrder(self, market, orderId, body):
+    def updateOrder(self, market: str, orderId: str, body: Dict) -> Any:
         body["market"] = market
         body["orderId"] = orderId
         return self.privateRequest("/order", "", body, "PUT")
 
-    def cancelOrder(self, market, orderId):
+    def cancelOrder(self, market: str, orderId: str) -> Any:
         postfix = createPostfix({"market": market, "orderId": orderId})
         return self.privateRequest("/order", postfix, {}, "DELETE")
 
     # options: limit, start, end, orderIdFrom, orderIdTo
-    def getOrders(self, market, options):
+    def getOrders(self, market: str, options: Dict) -> Any:
         options["market"] = market
         postfix = createPostfix(options)
         return self.privateRequest("/orders", postfix, {}, "GET")
 
     # options: market
-    def cancelOrders(self, options):
+    def cancelOrders(self, options: Dict) -> Any:
         postfix = createPostfix(options)
         return self.privateRequest("/orders", postfix, {}, "DELETE")
 
     # options: market
-    def ordersOpen(self, options):
+    def ordersOpen(self, options: Dict) -> Any:
         postfix = createPostfix(options)
         return self.privateRequest("/ordersOpen", postfix, {}, "GET")
 
     # options: limit, start, end, tradeIdFrom, tradeIdTo
-    def trades(self, market, options):
+    def trades(self, market: str, options: Dict) -> Any:
         options["market"] = market
         postfix = createPostfix(options)
         return self.privateRequest("/trades", postfix, {}, "GET")
 
-    def account(self):
+    def account(self) -> Any:
         return self.privateRequest("/account", "", {}, "GET")
 
     # options: symbol
-    def balance(self, options):
+    def balance(self, options: Dict) -> Any:
         postfix = createPostfix(options)
         return self.privateRequest("/balance", postfix, {}, "GET")
 
-    def depositAssets(self, symbol):
+    def depositAssets(self, symbol: str) -> Any:
         postfix = createPostfix({"symbol": symbol})
         return self.privateRequest("/depositAssets", postfix, {}, "GET")
 
     # optional body parameters: paymentId, internal, addWithdrawalFee
-    def withdrawAssets(self, symbol, amount, address, body):
+    def withdrawAssets(self, symbol: str, amount: str, address: str, body: Dict) -> Any:
         body["symbol"] = symbol
         body["amount"] = amount
         body["address"] = address
         return self.privateRequest("/withdrawal", "", body, "POST")
 
     # options: symbol, limit, start, end
-    def depositHistory(self, options):
+    def depositHistory(self, options: Dict) -> Any:
         postfix = createPostfix(options)
         return self.privateRequest("/depositHistory", postfix, {}, "GET")
 
     # options: symbol, limit, start, end
-    def withdrawalHistory(self, options):
+    def withdrawalHistory(self, options: Dict) -> Any:
         postfix = createPostfix(options)
         return self.privateRequest("/withdrawalHistory", postfix, {}, "GET")
 
-    def newWebsocket(self):
+    def newWebsocket(self) -> "Bitvavo.websocket":
         return Bitvavo.websocket(self.APIKEY, self.APISECRET, self.ACCESSWINDOW, self.wsUrl, self)
 
     class websocket:
-        def __init__(self, APIKEY, APISECRET, ACCESSWINDOW, WSURL, bitvavo):
+        def __init__(self, APIKEY: str, APISECRET: str, ACCESSWINDOW: int, WSURL: str, bitvavo: "Bitvavo"):
             self.APIKEY = APIKEY
             self.APISECRET = APISECRET
             self.ACCESSWINDOW = ACCESSWINDOW
             self.wsUrl = WSURL
             self.open = False
-            self.callbacks = {}
+            self.callbacks: Dict[str, Any] = {}
             self.keepAlive = True
             self.reconnect = False
             self.reconnectTimer = 0.1
@@ -373,9 +387,9 @@ class Bitvavo:
 
             self.subscribe()
 
-        def subscribe(self):
-            websocket.enableTrace(False)
-            ws = websocket.WebSocketApp(
+        def subscribe(self) -> None:
+            ws_lib.enableTrace(False)
+            ws = WebSocketApp(
                 self.wsUrl,
                 on_message=self.on_message,
                 on_error=self.on_error,
@@ -390,21 +404,21 @@ class Bitvavo:
 
             self.authenticated = False
             self.keepBookCopy = False
-            self.localBook = {}
+            self.localBook: Dict = {}
 
-        def closeSocket(self):
+        def closeSocket(self) -> None:
             self.ws.close()
             self.keepAlive = False
             self.receiveThread.join()
 
-        def waitForSocket(self, ws, message, private):
+        def waitForSocket(self, ws: WebSocketApp, message: str, private: bool) -> None:  # type: ignore
             if (not private and self.open) or (private and self.authenticated and self.open):
                 return
             else:
-                time.sleep(0.1)
+                sleep(0.1)
                 self.waitForSocket(ws, message, private)
 
-        def doSend(self, ws, message, private=False):
+        def doSend(self, ws: WebSocketApp, message: str, private: bool = False) -> None:  # type: ignore
             if private and self.APIKEY == "":
                 errorToConsole("You did not set the API key, but requested a private function.")
                 return
@@ -412,116 +426,115 @@ class Bitvavo:
             ws.send(message)
             debugToConsole("SENT: " + message)
 
-        def on_message(self, ws, msg):
-            debugToConsole("RECEIVED: " + msg)
-            msg = json.loads(msg)
+        def on_message(self, ws: WebSocketApp, msg: str) -> None:  # type: ignore # noqa: C901 (too-complex)
+            debugToConsole(f"RECEIVED: {msg}")
+            msg_dict: Dict[str, Any] = json.loads(msg)
             callbacks = self.callbacks
 
-            if "error" in msg:
-                if msg["errorCode"] == 105:
-                    self.bitvavo.updateRateLimit(msg)
+            if "error" in msg_dict:
+                if msg_dict["errorCode"] == 105:
+                    self.bitvavo.updateRateLimit(msg_dict)
                 if "error" in callbacks:
-                    callbacks["error"](msg)
+                    callbacks["error"](msg_dict)
                 else:
-                    errorToConsole(msg)
+                    errorToConsole(msg_dict)
 
-            if "action" in msg:
-                if msg["action"] == "getTime":
-                    callbacks["time"](msg["response"])
-                elif msg["action"] == "getMarkets":
-                    callbacks["markets"](msg["response"])
-                elif msg["action"] == "getAssets":
-                    callbacks["assets"](msg["response"])
-                elif msg["action"] == "getTrades":
-                    callbacks["publicTrades"](msg["response"])
-                elif msg["action"] == "getCandles":
-                    callbacks["candles"](msg["response"])
-                elif msg["action"] == "getTicker24h":
-                    callbacks["ticker24h"](msg["response"])
-                elif msg["action"] == "getTickerPrice":
-                    callbacks["tickerPrice"](msg["response"])
-                elif msg["action"] == "getTickerBook":
-                    callbacks["tickerBook"](msg["response"])
-                elif msg["action"] == "privateCreateOrder":
-                    callbacks["placeOrder"](msg["response"])
-                elif msg["action"] == "privateUpdateOrder":
-                    callbacks["updateOrder"](msg["response"])
-                elif msg["action"] == "privateGetOrder":
-                    callbacks["getOrder"](msg["response"])
-                elif msg["action"] == "privateCancelOrder":
-                    callbacks["cancelOrder"](msg["response"])
-                elif msg["action"] == "privateGetOrders":
-                    callbacks["getOrders"](msg["response"])
-                elif msg["action"] == "privateGetOrdersOpen":
-                    callbacks["ordersOpen"](msg["response"])
-                elif msg["action"] == "privateGetTrades":
-                    callbacks["trades"](msg["response"])
-                elif msg["action"] == "privateGetAccount":
-                    callbacks["account"](msg["response"])
-                elif msg["action"] == "privateGetBalance":
-                    callbacks["balance"](msg["response"])
-                elif msg["action"] == "privateDepositAssets":
-                    callbacks["depositAssets"](msg["response"])
-                elif msg["action"] == "privateWithdrawAssets":
-                    callbacks["withdrawAssets"](msg["response"])
-                elif msg["action"] == "privateGetDepositHistory":
-                    callbacks["depositHistory"](msg["response"])
-                elif msg["action"] == "privateGetWithdrawalHistory":
-                    callbacks["withdrawalHistory"](msg["response"])
-                elif msg["action"] == "privateCancelOrders":
-                    callbacks["cancelOrders"](msg["response"])
-                elif msg["action"] == "getBook":
-                    market = msg["response"]["market"]
+            if "action" in msg_dict:
+                if msg_dict["action"] == "getTime":
+                    callbacks["time"](msg_dict["response"])
+                elif msg_dict["action"] == "getMarkets":
+                    callbacks["markets"](msg_dict["response"])
+                elif msg_dict["action"] == "getAssets":
+                    callbacks["assets"](msg_dict["response"])
+                elif msg_dict["action"] == "getTrades":
+                    callbacks["publicTrades"](msg_dict["response"])
+                elif msg_dict["action"] == "getCandles":
+                    callbacks["candles"](msg_dict["response"])
+                elif msg_dict["action"] == "getTicker24h":
+                    callbacks["ticker24h"](msg_dict["response"])
+                elif msg_dict["action"] == "getTickerPrice":
+                    callbacks["tickerPrice"](msg_dict["response"])
+                elif msg_dict["action"] == "getTickerBook":
+                    callbacks["tickerBook"](msg_dict["response"])
+                elif msg_dict["action"] == "privateCreateOrder":
+                    callbacks["placeOrder"](msg_dict["response"])
+                elif msg_dict["action"] == "privateUpdateOrder":
+                    callbacks["updateOrder"](msg_dict["response"])
+                elif msg_dict["action"] == "privateGetOrder":
+                    callbacks["getOrder"](msg_dict["response"])
+                elif msg_dict["action"] == "privateCancelOrder":
+                    callbacks["cancelOrder"](msg_dict["response"])
+                elif msg_dict["action"] == "privateGetOrders":
+                    callbacks["getOrders"](msg_dict["response"])
+                elif msg_dict["action"] == "privateGetOrdersOpen":
+                    callbacks["ordersOpen"](msg_dict["response"])
+                elif msg_dict["action"] == "privateGetTrades":
+                    callbacks["trades"](msg_dict["response"])
+                elif msg_dict["action"] == "privateGetAccount":
+                    callbacks["account"](msg_dict["response"])
+                elif msg_dict["action"] == "privateGetBalance":
+                    callbacks["balance"](msg_dict["response"])
+                elif msg_dict["action"] == "privateDepositAssets":
+                    callbacks["depositAssets"](msg_dict["response"])
+                elif msg_dict["action"] == "privateWithdrawAssets":
+                    callbacks["withdrawAssets"](msg_dict["response"])
+                elif msg_dict["action"] == "privateGetDepositHistory":
+                    callbacks["depositHistory"](msg_dict["response"])
+                elif msg_dict["action"] == "privateGetWithdrawalHistory":
+                    callbacks["withdrawalHistory"](msg_dict["response"])
+                elif msg_dict["action"] == "privateCancelOrders":
+                    callbacks["cancelOrders"](msg_dict["response"])
+                elif msg_dict["action"] == "getBook":
+                    market = msg_dict["response"]["market"]
                     if "book" in callbacks:
-                        callbacks["book"](msg["response"])
+                        callbacks["book"](msg_dict["response"])
                     if self.keepBookCopy:
                         if market in callbacks["subscriptionBook"]:
-                            callbacks["subscriptionBook"][market](self, msg)
+                            callbacks["subscriptionBook"][market](self, msg_dict)
 
-            elif "event" in msg:
-                if msg["event"] == "authenticate":
+            elif "event" in msg_dict:
+                if msg_dict["event"] == "authenticate":
                     self.authenticated = True
-                elif msg["event"] == "fill":
-                    market = msg["market"]
-                    callbacks["subscriptionAccount"][market](msg)
-                elif msg["event"] == "order":
-                    market = msg["market"]
-                    callbacks["subscriptionAccount"][market](msg)
-                elif msg["event"] == "ticker":
-                    market = msg["market"]
-                    callbacks["subscriptionTicker"][market](msg)
-                elif msg["event"] == "ticker24h":
-                    for entry in msg["data"]:
+                elif msg_dict["event"] == "fill":
+                    market = msg_dict["market"]
+                    callbacks["subscriptionAccount"][market](msg_dict)
+                elif msg_dict["event"] == "order":
+                    market = msg_dict["market"]
+                    callbacks["subscriptionAccount"][market](msg_dict)
+                elif msg_dict["event"] == "ticker":
+                    market = msg_dict["market"]
+                    callbacks["subscriptionTicker"][market](msg_dict)
+                elif msg_dict["event"] == "ticker24h":
+                    for entry in msg_dict["data"]:
                         callbacks["subscriptionTicker24h"][entry["market"]](entry)
-                elif msg["event"] == "candle":
-                    market = msg["market"]
-                    interval = msg["interval"]
-                    callbacks["subscriptionCandles"][market][interval](msg)
-                elif msg["event"] == "book":
-                    market = msg["market"]
+                elif msg_dict["event"] == "candle":
+                    market = msg_dict["market"]
+                    interval = msg_dict["interval"]
+                    callbacks["subscriptionCandles"][market][interval](msg_dict)
+                elif msg_dict["event"] == "book":
+                    market = msg_dict["market"]
                     if "subscriptionBookUpdate" in callbacks:
                         if market in callbacks["subscriptionBookUpdate"]:
-                            callbacks["subscriptionBookUpdate"][market](msg)
+                            callbacks["subscriptionBookUpdate"][market](msg_dict)
                     if self.keepBookCopy:
                         if market in callbacks["subscriptionBook"]:
-                            callbacks["subscriptionBook"][market](self, msg)
-                elif msg["event"] == "trade":
-                    market = msg["market"]
+                            callbacks["subscriptionBook"][market](self, msg_dict)
+                elif msg_dict["event"] == "trade":
+                    market = msg_dict["market"]
                     if "subscriptionTrades" in callbacks:
-                        callbacks["subscriptionTrades"][market](msg)
+                        callbacks["subscriptionTrades"][market](msg_dict)
 
-        def on_error(self, ws, error):
+        def on_error(self, ws: WebSocketApp, error: Any):  # type: ignore
             if "error" in self.callbacks:
                 self.callbacks["error"](error)
             else:
                 errorToConsole(error)
 
-        def on_close(self, ws):
-            # TODO(NostraDavid) check if this exit() does anything
-            self.receiveThread.exit()
+        def on_close(self, ws: WebSocketApp):  # type: ignore
+            self.receiveThread.stop()
             debugToConsole("Closed Websocket.")
 
-        def checkReconnect(self):
+        def checkReconnect(self) -> None:  # noqa: C901 (too-complex)
             if "subscriptionTicker" in self.callbacks:
                 for market in self.callbacks["subscriptionTicker"]:
                     self.subscriptionTicker(market, self.callbacks["subscriptionTicker"][market])
@@ -549,8 +562,8 @@ class Bitvavo:
                 for market in self.callbacks["subscriptionBookUser"]:
                     self.subscriptionBook(market, self.callbacks["subscriptionBookUser"][market])
 
-        def on_open(self, ws):
-            now = int(time.time() * 1000)
+        def on_open(self, ws: WebSocketApp):  # type: ignore
+            now = int(time() * 1000)
             self.open = True
             self.reconnectTimer = 0.5
             if self.APIKEY != "":
@@ -568,44 +581,44 @@ class Bitvavo:
                 )
             if self.reconnect:
                 debugToConsole("we started reconnecting")
-                thread = threading.Thread(target=self.checkReconnect)
+                thread = Thread(target=self.checkReconnect)
                 thread.start()
 
-        def setErrorCallback(self, callback):
+        def setErrorCallback(self, callback: Callable) -> None:
             self.callbacks["error"] = callback
 
-        def time(self, callback):
+        def time(self, callback: Callable) -> None:
             self.callbacks["time"] = callback
             self.doSend(self.ws, json.dumps({"action": "getTime"}))
 
         # options: market
-        def markets(self, options, callback):
+        def markets(self, options: Dict, callback: Callable) -> None:
             self.callbacks["markets"] = callback
             options["action"] = "getMarkets"
             self.doSend(self.ws, json.dumps(options))
 
         # options: symbol
-        def assets(self, options, callback):
+        def assets(self, options: Dict, callback: Callable) -> None:
             self.callbacks["assets"] = callback
             options["action"] = "getAssets"
             self.doSend(self.ws, json.dumps(options))
 
         # options: depth
-        def book(self, market, options, callback):
+        def book(self, market: str, options: Dict, callback: Callable) -> None:
             self.callbacks["book"] = callback
             options["market"] = market
             options["action"] = "getBook"
             self.doSend(self.ws, json.dumps(options))
 
         # options: limit, start, end, tradeIdFrom, tradeIdTo
-        def publicTrades(self, market, options, callback):
+        def publicTrades(self, market: str, options: Dict, callback: Callable) -> None:
             self.callbacks["publicTrades"] = callback
             options["market"] = market
             options["action"] = "getTrades"
             self.doSend(self.ws, json.dumps(options))
 
         # options: limit
-        def candles(self, market, interval, options, callback):
+        def candles(self, market: str, interval: str, options: Dict, callback: Callable) -> None:
             self.callbacks["candles"] = callback
             options["market"] = market
             options["interval"] = interval
@@ -613,19 +626,19 @@ class Bitvavo:
             self.doSend(self.ws, json.dumps(options))
 
         # options: market
-        def ticker24h(self, options, callback):
+        def ticker24h(self, options: Dict, callback: Callable) -> None:
             self.callbacks["ticker24h"] = callback
             options["action"] = "getTicker24h"
             self.doSend(self.ws, json.dumps(options))
 
         # options: market
-        def tickerPrice(self, options, callback):
+        def tickerPrice(self, options: Dict, callback: Callable) -> None:
             self.callbacks["tickerPrice"] = callback
             options["action"] = "getTickerPrice"
             self.doSend(self.ws, json.dumps(options))
 
         # options: market
-        def tickerBook(self, options, callback):
+        def tickerBook(self, options: Dict, callback: Callable) -> None:
             self.callbacks["tickerBook"] = callback
             options["action"] = "getTickerBook"
             self.doSend(self.ws, json.dumps(options))
@@ -634,7 +647,7 @@ class Bitvavo:
         #                           stopLoss/takeProfit:(amount, amountQuote, disableMarketProtection, triggerType, triggerReference, triggerAmount)
         #                           stopLossLimit/takeProfitLimit:(amount, price, postOnly, triggerType, triggerReference, triggerAmount)
         #                           all orderTypes: timeInForce, selfTradePrevention, responseRequired
-        def placeOrder(self, market, side, orderType, body, callback):
+        def placeOrder(self, market: str, side: str, orderType: str, body: Dict, callback: Callable) -> None:
             self.callbacks["placeOrder"] = callback
             body["market"] = market
             body["side"] = side
@@ -642,7 +655,7 @@ class Bitvavo:
             body["action"] = "privateCreateOrder"
             self.doSend(self.ws, json.dumps(body), True)
 
-        def getOrder(self, market, orderId, callback):
+        def getOrder(self, market: str, orderId: str, callback: Callable) -> None:
             self.callbacks["getOrder"] = callback
             options = {
                 "action": "privateGetOrder",
@@ -654,14 +667,14 @@ class Bitvavo:
         # Optional parameters: limit:(amount, amountRemaining, price, timeInForce, selfTradePrevention, postOnly)
         #          untriggered stopLoss/takeProfit:(amount, amountQuote, disableMarketProtection, triggerType, triggerReference, triggerAmount)
         #                      stopLossLimit/takeProfitLimit: (amount, price, postOnly, triggerType, triggerReference, triggerAmount)
-        def updateOrder(self, market, orderId, body, callback):
+        def updateOrder(self, market: str, orderId: str, body: Dict, callback: Callable) -> None:
             self.callbacks["updateOrder"] = callback
             body["market"] = market
             body["orderId"] = orderId
             body["action"] = "privateUpdateOrder"
             self.doSend(self.ws, json.dumps(body), True)
 
-        def cancelOrder(self, market, orderId, callback):
+        def cancelOrder(self, market: str, orderId: str, callback: Callable) -> None:
             self.callbacks["cancelOrder"] = callback
             options = {
                 "action": "privateCancelOrder",
@@ -671,42 +684,42 @@ class Bitvavo:
             self.doSend(self.ws, json.dumps(options), True)
 
         # options: limit, start, end, orderIdFrom, orderIdTo
-        def getOrders(self, market, options, callback):
+        def getOrders(self, market: str, options: Dict, callback: Callable) -> None:
             self.callbacks["getOrders"] = callback
             options["action"] = "privateGetOrders"
             options["market"] = market
             self.doSend(self.ws, json.dumps(options), True)
 
         # options: market
-        def cancelOrders(self, options, callback):
+        def cancelOrders(self, options: Dict, callback: Callable) -> None:
             self.callbacks["cancelOrders"] = callback
             options["action"] = "privateCancelOrders"
             self.doSend(self.ws, json.dumps(options), True)
 
         # options: market
-        def ordersOpen(self, options, callback):
+        def ordersOpen(self, options: Dict, callback: Callable) -> None:
             self.callbacks["ordersOpen"] = callback
             options["action"] = "privateGetOrdersOpen"
             self.doSend(self.ws, json.dumps(options), True)
 
         # options: limit, start, end, tradeIdFrom, tradeIdTo
-        def trades(self, market, options, callback):
+        def trades(self, market: str, options: Dict, callback: Callable) -> None:
             self.callbacks["trades"] = callback
             options["action"] = "privateGetTrades"
             options["market"] = market
             self.doSend(self.ws, json.dumps(options), True)
 
-        def account(self, callback):
+        def account(self, callback: Callable) -> None:
             self.callbacks["account"] = callback
             self.doSend(self.ws, json.dumps({"action": "privateGetAccount"}), True)
 
         # options: symbol
-        def balance(self, options, callback):
+        def balance(self, options: Dict, callback: Callable) -> None:
             options["action"] = "privateGetBalance"
             self.callbacks["balance"] = callback
             self.doSend(self.ws, json.dumps(options), True)
 
-        def depositAssets(self, symbol, callback):
+        def depositAssets(self, symbol: str, callback: Callable) -> None:
             self.callbacks["depositAssets"] = callback
             self.doSend(
                 self.ws,
@@ -715,7 +728,7 @@ class Bitvavo:
             )
 
         # optional body parameters: paymentId, internal, addWithdrawalFee
-        def withdrawAssets(self, symbol, amount, address, body, callback):
+        def withdrawAssets(self, symbol: str, amount: str, address: str, body: Dict, callback: Callable) -> None:
             self.callbacks["withdrawAssets"] = callback
             body["action"] = "privateWithdrawAssets"
             body["symbol"] = symbol
@@ -724,18 +737,18 @@ class Bitvavo:
             self.doSend(self.ws, json.dumps(body), True)
 
         # options: symbol, limit, start, end
-        def depositHistory(self, options, callback):
+        def depositHistory(self, options: Dict, callback: Callable) -> None:
             self.callbacks["depositHistory"] = callback
             options["action"] = "privateGetDepositHistory"
             self.doSend(self.ws, json.dumps(options), True)
 
         # options: symbol, limit, start, end
-        def withdrawalHistory(self, options, callback):
+        def withdrawalHistory(self, options: Dict, callback: Callable) -> None:
             self.callbacks["withdrawalHistory"] = callback
             options["action"] = "privateGetWithdrawalHistory"
             self.doSend(self.ws, json.dumps(options), True)
 
-        def subscriptionTicker(self, market, callback):
+        def subscriptionTicker(self, market: str, callback: Callable) -> None:
             if "subscriptionTicker" not in self.callbacks:
                 self.callbacks["subscriptionTicker"] = {}
             self.callbacks["subscriptionTicker"][market] = callback
@@ -749,7 +762,7 @@ class Bitvavo:
                 ),
             )
 
-        def subscriptionTicker24h(self, market, callback):
+        def subscriptionTicker24h(self, market: str, callback: Callable) -> None:
             if "subscriptionTicker24h" not in self.callbacks:
                 self.callbacks["subscriptionTicker24h"] = {}
             self.callbacks["subscriptionTicker24h"][market] = callback
@@ -763,7 +776,7 @@ class Bitvavo:
                 ),
             )
 
-        def subscriptionAccount(self, market, callback):
+        def subscriptionAccount(self, market: str, callback: Callable) -> None:
             if "subscriptionAccount" not in self.callbacks:
                 self.callbacks["subscriptionAccount"] = {}
             self.callbacks["subscriptionAccount"][market] = callback
@@ -778,7 +791,7 @@ class Bitvavo:
                 True,
             )
 
-        def subscriptionCandles(self, market, interval, callback):
+        def subscriptionCandles(self, market: str, interval: str, callback: Callable) -> None:
             if "subscriptionCandles" not in self.callbacks:
                 self.callbacks["subscriptionCandles"] = {}
             if market not in self.callbacks["subscriptionCandles"]:
@@ -800,7 +813,7 @@ class Bitvavo:
                 ),
             )
 
-        def subscriptionTrades(self, market, callback):
+        def subscriptionTrades(self, market: str, callback: Callable) -> None:
             if "subscriptionTrades" not in self.callbacks:
                 self.callbacks["subscriptionTrades"] = {}
             self.callbacks["subscriptionTrades"][market] = callback
@@ -814,7 +827,7 @@ class Bitvavo:
                 ),
             )
 
-        def subscriptionBookUpdate(self, market, callback):
+        def subscriptionBookUpdate(self, market: str, callback: Callable) -> None:
             if "subscriptionBookUpdate" not in self.callbacks:
                 self.callbacks["subscriptionBookUpdate"] = {}
             self.callbacks["subscriptionBookUpdate"][market] = callback
@@ -828,7 +841,7 @@ class Bitvavo:
                 ),
             )
 
-        def subscriptionBook(self, market, callback):
+        def subscriptionBook(self, market: str, callback: Callable) -> None:
             self.keepBookCopy = True
             if "subscriptionBookUser" not in self.callbacks:
                 self.callbacks["subscriptionBookUser"] = {}
