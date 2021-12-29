@@ -1,5 +1,17 @@
 # Changelog
 
+## $UNRELEASED
+
+### Added
+
+- separate README for pypi; now I can keep that separate from the one on Github; they can share *some* information, but don't need to share all
+- guides on how to get started as either a users or a developer (who wants to work on this lib)
+- test support for Python 3.7 - 3.10
+
+### Changed
+
+- dependencies are now loosened so users of this lib get more freedom to choose their versions
+
 ## v1.4.1 - 2021-12-29
 
 ### Changed
