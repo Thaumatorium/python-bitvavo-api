@@ -350,7 +350,7 @@ class Bitvavo:
 
     def depositAssets(self, symbol: str) -> Any:
         postfix = createPostfix({"symbol": symbol})
-        return self.privateRequest("/depositAssets", postfix, {}, "GET")
+        return self.privateRequest("/deposit", postfix, {}, "GET")
 
     # optional body parameters: paymentId, internal, addWithdrawalFee
     def withdrawAssets(self, symbol: str, amount: str, address: str, body: Dict) -> Any:

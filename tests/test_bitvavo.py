@@ -379,15 +379,15 @@ class TestBitvavo:
         assert len(response) == 2
         assert "error" in response
         assert "errorCode" in response
-        assert (
-            response["error"]
-            == "No order found. Please be aware that simultaneously updating the same order may return this error."
-        )
+        long_str = "No order found. Please be aware that simultaneously updating the same order may return this error."
+        assert response["error"] == long_str
         assert response["errorCode"] == 240
 
     def test_update_order(self, bitvavo: Bitvavo):
         response = bitvavo.updateOrder(
-            market="BTC-EUR", orderId="dd055772-0f02-493c-a049-f4356fa0d221", body={"amount": "0.2"}
+            market="BTC-EUR",
+            orderId="dd055772-0f02-493c-a049-f4356fa0d221",
+            body={"amount": "0.2"},
         )
         assert len(response) == 2
         assert "errorCode" in response
@@ -519,11 +519,8 @@ class TestBitvavo:
         """
         response = bitvavo.depositAssets("BTC")
 
-        assert "errorCode" in response
-        assert "error" in response
-
-        assert response["errorCode"] == 110
-        assert response["error"] == "Invalid endpoint. Please check url and HTTP method."
+        assert "address" in response
+        assert type(response["address"]) == str
 
     def test_withdraw_assets(self, bitvavo: Bitvavo):
         response = bitvavo.withdrawAssets("BTC", "1", "BitcoinAddress", {})
@@ -736,7 +733,9 @@ class TestWebsocket:
     @mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
     def test_cancel_order(self, caplog, capsys, websocket: Bitvavo.websocket):
         websocket.cancelOrder(
-            market="BTC-EUR", orderId="6d0dffa7-07fe-448e-9928-233821e7cdb5", callback=generic_callback
+            market="BTC-EUR",
+            orderId="6d0dffa7-07fe-448e-9928-233821e7cdb5",
+            callback=generic_callback,
         )
 
     def test_get_orders(self, caplog, capsys, websocket: Bitvavo.websocket):
