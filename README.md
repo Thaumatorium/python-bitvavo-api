@@ -1,6 +1,28 @@
-<h1>WARNING: NOT THE OFFICIAL API</h1>
+# Bitvavo API (upgraded)
 
-## Semantic Versioning (SemVer)
+## Userguide
+
+`pip install bitvavo_api_upgraded`
+
+Works the same as the official API lib, but I have:
+
+- typing for *all* functions and classes
+- unit tests (I already found three bugs that I fixed, because the original code wasn't tested, at all)
+- a changelog, so you can track of the changes that I make
+- compatible with Python 3.7 and newer ([3.6 isn't supported as of 2021-12-23](https://endoflife.date/python))
+
+## Devguide
+
+```shell
+echo "install development requirements"
+pip install -r requirements/dev.txt
+echo "install lib as editable code (changes are directly propogated)"
+pip install -e .
+echo "run tox, a program that creates separate environments for different python versions, for testing purposes (among other things)"
+tox
+```
+
+### Semantic Versioning (SemVer)
 
 I'm using semantic versioning, which means that changes mean this:
 
@@ -8,12 +30,12 @@ I'm using semantic versioning, which means that changes mean this:
 1. MINOR version when you add functionality in a backwards compatible manner, and
 1. PATCH version when you make backwards compatible bug fixes.
 
-## Versioning
+### Versioning
 
 Copy the following block to CHANGELOG.md and add all information since last version bump
 
 ```markdown
-## [unreleased]
+## $UNRELEASED
 
 ### Added
 ...
@@ -25,8 +47,10 @@ Copy the following block to CHANGELOG.md and add all information since last vers
 ...
 ```
 
-After that, run `bump2version (major|minor|patch)` to automatically replace `unreleased` with the new version number,
-and also automatically tag and commit (with tag) to release a new version
+Commit those changes.
+
+After that, run `bump2version (major|minor|patch)` to automatically replace `$UNRELEASED` with the new version number,
+and also automatically tag and commit (with tag) to release a new version via the Github workflow.
 
 ## Last note
 
