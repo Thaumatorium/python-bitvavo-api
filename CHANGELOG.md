@@ -1,36 +1,45 @@
 # Changelog
 
-## [v1.3.3] - 2021-12-29
+## $UNRELEASED
+
+### Changed
+
+- set the `mypy` settings to something sane (as per some rando internet articles)
+- `pre-commit` `flake8` support; this was initially disabled due to too a lack of sane settings
+- reduced pyupgrade from `--py39-plus` to `--py38-plus`, due to `39` changing `Dict` to `dict` and `List` to `list`, but `mypy` not being able to handle those new types yet.
+- added types to *all* functions, methods and classes
+
+## v1.3.3 - 2021-12-29
 
 ### Changed
 
 - fix the workflow (hopefully) - if I did, then this is the last you'll see about that
 
-## [v1.3.2] - 2021-12-29
+## v1.3.2 - 2021-12-29
 
 ### Changed
 
 - fix requirements; 1.3.1 is *broken*
 
-## [v1.3.1] - 2021-12-29
+## v1.3.1 - 2021-12-29
 
 ### Changed
 
 - easy fix to enable publishing to PyPi: disable the `if` that checks for tags 😅
 
-## [v1.3.0] - 2021-12-28
+## v1.3.0 - 2021-12-28
 
 ### Changed
 
 - when there's a version bump, Github should push to PyPi now (not only to https://test.pypi.org)
 
-## [v1.1.1] - 2021-12-28
+## v1.1.1 - 2021-12-28
 
 ### Changed
 
 - improved description
 
-## [v1.1.0] - 2021-12-28
+## v1.1.0 - 2021-12-28
 
 ### Added
 
@@ -48,7 +57,7 @@
 
 ...
 
-## \[v1.0.2\] - 2021-12-27
+## v1.0.2 - 2021-12-27
 
 Everything from since NostraDavid started this project; version `1.0.0` and `1.0.1` did not have `bump2version` working well yet, which is why they do not have separate entries
 
