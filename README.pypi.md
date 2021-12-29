@@ -7,7 +7,9 @@ Hi, this is *not* the official API, but this one has:
 - a changelog, so you can track of the changes that I make
 - compatible with Python 3.7 and newer ([3.6 isn't supported as of 2021-12-23](https://endoflife.date/python))
 
-Version `1.*` is guaranteed compatible with the original API.
+Version `1.*` is guaranteed compatible\* with the original API.
+
+\*: Except for `Bitvavo.candles`. I had to renamed the `symbol` argument to `market`, because the `candles` call actually excpects a `market`. So that's more of a bugfix.
 
 ## Links
 

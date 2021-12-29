@@ -1,5 +1,15 @@
 # Changelog
 
+## $UNRELEASED
+
+Bugfix round! All found bugs in the original code should now be fixed.
+
+### Changed
+
+- fixed ["Negative sleep time length"](https://github.com/bitvavo/python-bitvavo-api/pull/22)
+- fixed ["API response error when calling depositAssets()"](https://github.com/bitvavo/python-bitvavo-api/pull/18)
+- in `Bitvavo.candles()` renamed the `symbol` argument to `market`, because candles expects a market, and not a symbol... The only API break I've done so far, but it's super minor.
+
 ## v1.5.0 - 2021-12-29
 
 ### Added
