@@ -1,6 +1,6 @@
 # Changelog
 
-## $UNRELEASED
+## v1.5.0 - 2021-12-29
 
 ### Added
 
