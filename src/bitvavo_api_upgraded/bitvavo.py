@@ -125,6 +125,9 @@ class rateLimitThread(Thread):
             self.waitForReset(timeToWait)
 
     def run(self) -> None:
+        if self.timeToWait < 0:
+            self.timeToWait = 0.001  # 1ms
+
         self.waitForReset(self.timeToWait)
 
 
