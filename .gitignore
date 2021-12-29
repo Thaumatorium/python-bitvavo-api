@@ -16,6 +16,7 @@
 !MANIFEST.in
 !pyproject.toml
 !README.md
+!README.pypi.md
 !setup.py
 !tox.ini
 

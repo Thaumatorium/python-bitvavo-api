@@ -9,7 +9,7 @@ __version__ = "1.4.1"
 with (HERE / "requirements" / "base.txt").open(mode="r") as requirements_file:
     requirements = requirements_file.read().splitlines()
 
-with (HERE / "README.md").open(mode="r") as readme_file:
+with (HERE / "README.pypi.md").open(mode="r") as readme_file:
     readme = readme_file.read()
 
 # TODO(NostraDavid) add a classifier after testing several versions; maybe change `python_requires`
