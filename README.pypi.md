@@ -8,3 +8,8 @@ Hi, this is *not* the official API, but this one has:
 - compatible with Python 3.7 and newer ([3.6 isn't supported as of 2021-12-23](https://endoflife.date/python))
 
 Version `1.*` is guaranteed compatible with the original API.
+
+## Links
+
+- [official docs](https://docs.bitvavo.com/)
+- [Github for this lib](https://github.com/Thaumatorium/bitvavo-api-upgraded)
