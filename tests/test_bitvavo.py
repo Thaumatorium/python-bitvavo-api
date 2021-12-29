@@ -224,7 +224,7 @@ class TestBitvavo:
     def test_candle(self, bitvavo: Bitvavo):
         """This is one of the weirder results: a list of lists"""
         # Timestamp: candle[0], open: candle[1], high: candle[2], low: candle[3], close: candle[4], volume: candle[5]
-        response = bitvavo.candles(symbol="BTC-EUR", interval="1h", options={})
+        response = bitvavo.candles(market="BTC-EUR", interval="1h", options={})
         for candle in response:
             assert len(candle) == 6
             assert type(candle) == list

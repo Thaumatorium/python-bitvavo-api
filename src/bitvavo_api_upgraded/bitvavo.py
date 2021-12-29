@@ -275,10 +275,10 @@ class Bitvavo:
         return self.publicRequest(self.base + "/" + symbol + "/trades" + postfix)
 
     # options: limit, start, end
-    def candles(self, symbol: str, interval: str, options: Dict) -> Any:
+    def candles(self, market: str, interval: str, options: Dict) -> Any:
         options["interval"] = interval
         postfix = createPostfix(options)
-        return self.publicRequest(self.base + "/" + symbol + "/candles" + postfix)
+        return self.publicRequest(self.base + "/" + market + "/candles" + postfix)
 
     # options: market
     def tickerPrice(self, options: Dict) -> Any:
