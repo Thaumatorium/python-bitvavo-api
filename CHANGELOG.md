@@ -1,5 +1,11 @@
 # Changelog
 
+## $UNRELEASED
+
+### Changed
+
+- nothing, I just need to push a new commit to Github so I can trigger a new publish
+
 ## v1.4.0 - 2021-12-29
 
 ### Changed
