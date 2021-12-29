@@ -6,18 +6,17 @@ check-manifest==0.47  # to check and create the MANIFEST.in file (for the source
 cookiecutter==1.7.3  # cookiecutter gh:ionelmc/cookiecutter-pylibrary
 coverage[toml]==6.1.1
 flake8==3.9.2  # linter for python. I prefer it over pylint due to extensibility
-hypothesis==6.24.2  # (mathematical) property-based testing
 isort==5.10.0  # sort imports
-mdformat==0.7.11
+mdformat==0.7.11  # for formatting markdown (.md) documents
 mkdocs==1.2.3  # for markdown documentation
-mutmut==2.2.0  # mutation testing the unit tests
-mypy==0.920  # will shout at you if 
+mypy==0.920  # amazing linter
 pre-commit==2.15.0  # for running hooks before committing code
 pytest-integration==0.2.2 # for @mark additions
 pytest-mock==3.6.1
 pytest==6.2.4  # you can run `pytest` to run the unit tests; will also be run by `tox` :)
 pyupgrade==2.29.0  # to make sure code conforms to certain minimal version
 setuptools==60.1.0  # for building the application
+tox-pyenv==1.1.0  # to ensure tox can use pyenv
 tox==3.24.4  # run `tox` to test everything
 types-requests==2.26.2  # typing for mypy
 wheel==0.37.1  # for building the application
