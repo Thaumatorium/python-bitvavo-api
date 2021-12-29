@@ -1,6 +1,6 @@
 # Changelog
 
-## $UNRELEASED
+## v1.6.0 - 2021-12-29
 
 Bugfix round! All found bugs in the original code should now be fixed.
 
