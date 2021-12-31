@@ -1,5 +1,31 @@
 # Changelog
 
+## $UNRELEASED
+
+Documentation now comes built-in! :D
+
+I'll probably find some typo/minor error right after creating this version, but I think for users this is one of the more important updates, so out it does!
+
+PS: Happy new year! I write this as it's 2021-12-31 23:15. Almost stopping, so I can stuff my face with Oliebollen and celebrate new year! :D
+
+### Added
+
+- documentation/docstrings for almost every function and method!
+- type aliases: `anydict`,`strdict`,`intdict`,`errordict`
+- types for `caplog` and `capsys` in all `test_*` function
+
+### Changed
+
+- `candle` wasn't the only wrongly named method. `book` was too. Changed `symbol` argument to `market`
+- string concatenation converted to f-strings
+- a ton of improvements to unit tests, checking for types, and conversion possibilities, though most of them for `Bitvavo`, not for `Bitvavo.websocket`
+- simplified a few functions; though I wrote tests for them to confirm behavior before changing them
+- improved type hints for several functions - for example: replaced some `Any`'s with `Union[List[anydict], anydict]`; in other words: reduced the use of `Any`
+
+### Removed
+
+- the old non-documentation above each function (it usually started with `# options:`)
+
 ## v1.6.0 - 2021-12-29
 
 Bugfix round! All found bugs in the original code should now be fixed.
