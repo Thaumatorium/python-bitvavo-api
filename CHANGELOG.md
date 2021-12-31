@@ -1,6 +1,6 @@
 # Changelog
 
-## $UNRELEASED
+## v1.7.0 - 2021-12-31
 
 Documentation now comes built-in! :D
 
