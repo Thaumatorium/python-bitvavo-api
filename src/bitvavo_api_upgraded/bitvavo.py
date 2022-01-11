@@ -2,8 +2,8 @@ import hashlib
 import hmac
 import json
 import logging
+import time
 from threading import Thread
-from time import sleep, time
 from typing import Any, Callable, Dict, List, Union
 
 import websocket as ws_lib  # type: ignore
@@ -135,12 +135,12 @@ class rateLimitThread(Thread):
         Thread.__init__(self)
 
     def waitForReset(self, waitTime: float) -> None:
-        sleep(waitTime)
-        if time() < self.bitvavo.rateLimitReset:
+        time.sleep(waitTime)
+        if time.time() < self.bitvavo.rateLimitReset:
             self.bitvavo.rateLimitRemaining = 1000
             debugToConsole("Ban should have been lifted, resetting rate limit to 1000.")
         else:
-            timeToWait = (self.bitvavo.rateLimitReset / 1000) - time()
+            timeToWait = (self.bitvavo.rateLimitReset / 1000) - time.time()
             debugToConsole(f"Ban took longer than expected, sleeping again for {timeToWait} seconds.")
             self.waitForReset(timeToWait)
 
@@ -163,7 +163,7 @@ class receiveThread(Thread):
                 self.ws.run_forever()
                 self.wsObject.reconnect = True
                 self.wsObject.authenticated = False
-                sleep(self.wsObject.reconnectTimer)
+                time.sleep(self.wsObject.reconnectTimer)
                 debugToConsole(f"we have just set reconnect to true and have waited for {self.wsObject.reconnectTimer}")
                 self.wsObject.reconnectTimer = self.wsObject.reconnectTimer * 2
         except KeyboardInterrupt:
@@ -273,22 +273,22 @@ class Bitvavo:
         """
         return self.rateLimitRemaining
 
-    def updateRateLimit(self, response: anydict) -> None:  # type: ignore
+    def updateRateLimit(self, response: anydict) -> None:
         if "errorCode" in response:
             if response["errorCode"] == 105:
                 self.rateLimitRemaining = 0
                 self.rateLimitReset = int(response["error"].split(" at ")[1].split(".")[0])
-                timeToWait = (self.rateLimitReset / 1000) - time()
+                timeToWait = (self.rateLimitReset / 1000) - time.time()
                 if not hasattr(self, "rateLimitThread"):
                     self.rateLimitThread = rateLimitThread(timeToWait, self)
                     self.rateLimitThread.daemon = True
                     self.rateLimitThread.start()
             # setTimeout(checkLimit, timeToWait)
-        if "bitvavo-ratelimit-remaining" in response:
-            self.rateLimitRemaining = int(response["bitvavo-ratelimit-remaining"])
-        if "bitvavo-ratelimit-resetat" in response:
-            self.rateLimitReset = int(response["bitvavo-ratelimit-resetat"])
-            timeToWait = (self.rateLimitReset / 1000) - time()
+        if "Bitvavo-Ratelimit-Remaining" in response:
+            self.rateLimitRemaining = int(response["Bitvavo-Ratelimit-Remaining"])
+        if "Bitvavo-Ratelimit-ResetAt" in response:
+            self.rateLimitReset = int(response["Bitvavo-Ratelimit-ResetAt"])
+            timeToWait = (self.rateLimitReset / 1000) - time.time()
             if not hasattr(self, "rateLimitThread"):
                 self.rateLimitThread = rateLimitThread(timeToWait, self)
                 self.rateLimitThread.daemon = True
@@ -315,7 +315,7 @@ class Bitvavo:
         """
         debugToConsole(f"REQUEST: {url}")
         if self.APIKEY != "":
-            now = int(time() * 1000)
+            now = int(time.time() * 1000)
             sig = createSignature(now, "GET", url.replace(self.base, ""), {}, self.APISECRET)
             headers = {
                 "Bitvavo-Access-Key": self.APIKEY,
@@ -362,7 +362,7 @@ class Bitvavo:
         ```
         """
         # if this method breaks: add `= {}` after `body:Dict``
-        now = int(time() * 1000)
+        now = int(time.time() * 1000)
         sig = createSignature(now, method, (endpoint + postfix), body, self.APISECRET)
         url = self.base + endpoint + postfix
         headers = {
@@ -414,7 +414,6 @@ class Bitvavo:
         ---
         Examples:
         * https://api.bitvavo.com/v2/markets
-        * https://api.bitvavo.com/v2/markets?market={market}
         * https://api.bitvavo.com/v2/markets?market=BTC-EUR
         * https://api.bitvavo.com/v2/markets?market=SHIB-EUR
 
@@ -467,7 +466,6 @@ class Bitvavo:
         ---
         Examples:
         * https://api.bitvavo.com/v2/assets
-        * https://api.bitvavo.com/v2/assets?symbol={symbol}
         * https://api.bitvavo.com/v2/assets?symbol=BTC
         * https://api.bitvavo.com/v2/assets?symbol=SHIB
         * https://api.bitvavo.com/v2/assets?symbol=ADA
@@ -515,7 +513,6 @@ class Bitvavo:
 
         ---
         Examples:
-        * https://api.bitvavo.com/v2/{market}/book
         * https://api.bitvavo.com/v2/BTC-EUR/book
         * https://api.bitvavo.com/v2/SHIB-EUR/book?depth=10
         * https://api.bitvavo.com/v2/ADA-EUR/book?depth=0
@@ -560,7 +557,6 @@ class Bitvavo:
 
         ---
         Examples:
-        * https://api.bitvavo.com/v2/{market}/trades
         * https://api.bitvavo.com/v2/BTC-EUR/trades
         * https://api.bitvavo.com/v2/SHIB-EUR/trades?limit=10
         * https://api.bitvavo.com/v2/ADA-EUR/trades?tradeIdFrom=532f4d4d-f545-4a2d-a175-3d37919cb73c
@@ -619,7 +615,6 @@ class Bitvavo:
 
         ---
         Examples:
-        * https://api.bitvavo.com/v2/{market}/candles?interval={interval}}
         * https://api.bitvavo.com/v2/BTC-EUR/candles?interval=1h&limit=100
 
         ---
@@ -1594,7 +1589,7 @@ class Bitvavo:
             if (not private and self.open) or (private and self.authenticated and self.open):
                 return
             else:
-                sleep(0.1)
+                time.sleep(0.1)
                 self.waitForSocket(ws, message, private)
 
         def doSend(self, ws: WebSocketApp, message: str, private: bool = False) -> None:  # type: ignore
@@ -1742,7 +1737,7 @@ class Bitvavo:
                     self.subscriptionBook(market, self.callbacks["subscriptionBookUser"][market])
 
         def on_open(self, ws: WebSocketApp):  # type: ignore
-            now = int(time() * 1000)
+            now = int(time.time() * 1000)
             self.open = True
             self.reconnectTimer = 0.5
             if self.APIKEY != "":
@@ -1800,7 +1795,6 @@ class Bitvavo:
             ---
             Examples:
             * https://api.bitvavo.com/v2/markets
-            * https://api.bitvavo.com/v2/markets?market={market}
             * https://api.bitvavo.com/v2/markets?market=BTC-EUR
             * https://api.bitvavo.com/v2/markets?market=SHIB-EUR
 
@@ -1855,7 +1849,6 @@ class Bitvavo:
             ---
             Examples:
             * https://api.bitvavo.com/v2/assets
-            * https://api.bitvavo.com/v2/assets?symbol={symbol}
             * https://api.bitvavo.com/v2/assets?symbol=BTC
             * https://api.bitvavo.com/v2/assets?symbol=SHIB
             * https://api.bitvavo.com/v2/assets?symbol=ADA
@@ -1905,7 +1898,6 @@ class Bitvavo:
 
             ---
             Examples:
-            * https://api.bitvavo.com/v2/{market}/book
             * https://api.bitvavo.com/v2/BTC-EUR/book
             * https://api.bitvavo.com/v2/SHIB-EUR/book?depth=10
             * https://api.bitvavo.com/v2/ADA-EUR/book?depth=0
@@ -1953,7 +1945,6 @@ class Bitvavo:
 
             ---
             Examples:
-            * https://api.bitvavo.com/v2/{market}/trades
             * https://api.bitvavo.com/v2/BTC-EUR/trades
             * https://api.bitvavo.com/v2/SHIB-EUR/trades?limit=10
             * https://api.bitvavo.com/v2/ADA-EUR/trades?tradeIdFrom=532f4d4d-f545-4a2d-a175-3d37919cb73c
@@ -2010,7 +2001,6 @@ class Bitvavo:
 
             ---
             Examples:
-            * https://api.bitvavo.com/v2/{market}/candles?interval={interval}}
             * https://api.bitvavo.com/v2/BTC-EUR/candles?interval=1h&limit=100
 
             ---

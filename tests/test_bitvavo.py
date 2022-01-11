@@ -616,16 +616,22 @@ class TestBitvavo:
         assert len(response) == 2
         assert "errorCode" in response
         assert "error" in response
-        assert response["errorCode"] == 310
-        assert response["error"] == "This key does not allow trading actions."
+        assert response["errorCode"] == 240
+        assert (
+            response["error"]
+            == "No order found. Please be aware that simultaneously updating the same order may return this error."
+        )
 
     def test_cancel_order(self, bitvavo: Bitvavo):
         response = bitvavo.cancelOrder(market="BTC-EUR", orderId="dd055772-0f02-493c-a049-f4356fa0d221")
         assert len(response) == 2
         assert "errorCode" in response
         assert "error" in response
-        assert response["errorCode"] == 310
-        assert response["error"] == "This key does not allow trading actions."
+        assert response["errorCode"] == 240
+        assert (
+            response["error"]
+            == "No order found. Please be aware that simultaneously updating the same order may return this error."
+        )
 
     def test_get_orders(self, bitvavo: Bitvavo):
         response = bitvavo.getOrders(market="BTC-EUR", options={})
@@ -891,8 +897,8 @@ class TestBitvavo:
         assert "errorCode" in response
         assert "error" in response
 
-        assert response["errorCode"] == 312
-        assert response["error"] == "This key does not allowing withdrawal of funds."
+        assert response["errorCode"] == 412
+        assert response["error"] == "double_submit."
 
     def test_deposit_history_all(self, bitvavo: Bitvavo):
         response = bitvavo.depositHistory(options={})
