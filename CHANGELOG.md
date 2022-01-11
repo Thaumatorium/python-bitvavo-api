@@ -1,5 +1,11 @@
 # Changelog
 
+## $UNRELEASED
+
+### Changed
+
+- fixed getRemainingLimit - This explains why it NEVER changed from 1000...
+
 ## v1.7.0 - 2021-12-31
 
 Documentation now comes built-in! :D
