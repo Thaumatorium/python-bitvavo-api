@@ -11,4 +11,4 @@ def time_ms() -> ms:
 
 
 def time_to_wait(rateLimitResetAt: ms) -> s_f:
-    return s_f((rateLimitResetAt - time_ms()) / 1000)
+    return abs(s_f((rateLimitResetAt - time_ms()) / 1000))
