@@ -219,7 +219,23 @@ class Bitvavo:
         self.rateLimitRemaining: int = 1000
         self.rateLimitResetAt: ms = 0
         global debugging
+        self.lag = self.calcLag()
         debugging = bool(options.get("debugging", False))
+
+    def calcLag(self) -> ms:
+        """
+        Calculate the time difference between the client and server; use this value when you make an api call,
+        to precent 304 errors
+        """
+        lag_list = [
+            self.time()["time"] - time_ms(),
+            self.time()["time"] - time_ms(),
+            self.time()["time"] - time_ms(),
+            self.time()["time"] - time_ms(),
+            self.time()["time"] - time_ms(),
+        ]
+
+        return ms(sum(lag_list) / len(lag_list))
 
     def getRemainingLimit(self) -> int:
         """Get the remaing rate limit
@@ -232,8 +248,14 @@ class Bitvavo:
         """
         return self.rateLimitRemaining
 
-    def updateRateLimit(self, response: anydict) -> None:
-        debugToConsole(f"updateRateLimit: {response}")
+    def updateRateLimit(self, response: Union[anydict, errordict]) -> None:
+        """
+        Update the rate limited
+
+        If you're banned, use the errordict to sleep until you're not banned
+
+        If you're not banned, then use the received headers to update the variables.
+        """
         if "errorCode" in response:
             if response["errorCode"] == 105:
                 self.rateLimitRemaining = 0
@@ -269,9 +291,10 @@ class Bitvavo:
         List[List[str]]
         ```
         """
-        debugToConsole(f"REQUEST: {url}")
+        with_api_key = " with api key" if self.APIKEY != "" else " without api key"
+        debugToConsole(f"REQUEST{with_api_key}: {url}")
         if self.APIKEY != "":
-            now = int(time.time() * 1000)
+            now = time_ms() - self.lag
             sig = createSignature(now, "GET", url.replace(self.base, ""), {}, self.APISECRET)
             headers = {
                 "Bitvavo-Access-Key": self.APIKEY,
@@ -318,7 +341,7 @@ class Bitvavo:
         ```
         """
         # if this method breaks: add `= {}` after `body:Dict``
-        now = int(time.time() * 1000)
+        now = time_ms() - self.lag
         sig = createSignature(now, method, (endpoint + postfix), body, self.APISECRET)
         url = self.base + endpoint + postfix
         headers = {
@@ -1693,7 +1716,7 @@ class Bitvavo:
                     self.subscriptionBook(market, self.callbacks["subscriptionBookUser"][market])
 
         def on_open(self, ws: WebSocketApp):  # type: ignore
-            now = int(time.time() * 1000)
+            now = time_ms() - self.bitvavo.lag
             self.open = True
             self.reconnectTimer = 0.5
             if self.APIKEY != "":
