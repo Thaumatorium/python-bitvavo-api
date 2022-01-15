@@ -1,6 +1,6 @@
 # Changelog
 
-## $UNRELEASED
+## v1.10.0 - 2022-01-15
 
 No more `print()` bullshit! :D
 
