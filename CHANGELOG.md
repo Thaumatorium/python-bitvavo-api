@@ -1,5 +1,14 @@
 # Changelog
 
+## $UNRELEASED
+
+No more `print()` bullshit! :D
+
+### Added
+
+- classifiers on the pypi page
+- a better logging library (structlog). This should enable you to control logging better (while providing better logs!)
+
 ## v1.9.0 - 2022-01-15
 
 ### Changed
