@@ -1,44 +1,20 @@
 import hashlib
 import hmac
 import json
-import logging
 import time
 from threading import Thread
 from typing import Any, Callable, Dict, List, Union
-
+from datetime import datetime, timedelta
 import websocket as ws_lib  # type: ignore
 from requests import delete, get, post, put  # type: ignore
 from websocket import WebSocketApp  # missing stubs for WebSocketApp
 
 from bitvavo_api_upgraded.helper_funcs import time_ms, time_to_wait
 from bitvavo_api_upgraded.type_aliases import anydict, errordict, intdict, ms, s_f, strdict
+from structlog import get_logger  # type: ignore
 
 debugging: bool = False
-
-logger = logging.getLogger("bitvavo-api-upgraded")
-
-
-def debugToConsole(message: Any) -> None:
-    """Print `message` to the console
-
-    ---
-    Args:
-        `message (Any)`: is either a `str` or an Exception object
-    """
-    if debugging:
-        print(message)
-        logger.info(message)
-
-
-def errorToConsole(message: Any) -> None:
-    """Print `message` to the console
-
-    ---
-    Args:
-        `message (Any)`: is either a `str` or an Exception object
-    """
-    print(message)
-    logger.error(message)
+logger = get_logger("bitvavo-api-upgraded")
 
 
 def createSignature(timestamp: ms, method: str, url: str, body: anydict, APISECRET: str) -> str:
@@ -138,10 +114,10 @@ class receiveThread(Thread):
                 self.wsObject.reconnect = True
                 self.wsObject.authenticated = False
                 time.sleep(self.wsObject.reconnectTimer)
-                debugToConsole(f"we have just set reconnect to true and have waited for {self.wsObject.reconnectTimer}")
+                logger.debug(f"we have just set reconnect to true and have waited for {self.wsObject.reconnectTimer}")
                 self.wsObject.reconnectTimer = self.wsObject.reconnectTimer * 2
         except KeyboardInterrupt:
-            debugToConsole("We caught keyboard interrupt in the websocket thread.")
+            logger.debug("keyboard-interrupt")
 
     def stop(self) -> None:
         self.wsObject.keepAlive = False
@@ -267,7 +243,13 @@ class Bitvavo:
                 # "Your IP or API key has been banned for not respecting the rate limit. The ban expires at ${expiryInMs}""
                 self.rateLimitResetAt = ms(response["error"].split(" at ")[1].split(".")[0])
                 timeToWait = time_to_wait(self.rateLimitResetAt)
-                debugToConsole(f"You got banned! Sleeping for {timeToWait + 1} seconds, and by then you'll by unbanned")
+                logger.debug(
+                    "banned",
+                    info={
+                        "wait_time_seconds": timeToWait + 1,
+                        "until": (datetime.now() + timedelta(seconds=timeToWait + 1)).isoformat(),
+                    },
+                )
                 time.sleep(timeToWait + 1)  # plus one second to ENSURE we're able to run again.
         if "Bitvavo-Ratelimit-Remaining" in response:
             self.rateLimitRemaining = int(response["Bitvavo-Ratelimit-Remaining"])
@@ -293,8 +275,14 @@ class Bitvavo:
         List[List[str]]
         ```
         """
-        with_api_key = " with api key" if self.APIKEY != "" else " without api key"
-        debugToConsole(f"REQUEST{with_api_key}: {url}")
+        logger.debug(
+            "api-request",
+            info={
+                "url": url,
+                "with_api_key": bool(self.APIKEY != ""),
+                "public_or_private": "public",
+            },
+        )
         if self.APIKEY != "":
             now = time_ms() - self.lag
             sig = createSignature(now, "GET", url.replace(self.base, ""), {}, self.APISECRET)
@@ -352,7 +340,15 @@ class Bitvavo:
             "Bitvavo-Access-Timestamp": str(now),
             "Bitvavo-Access-Window": str(self.ACCESSWINDOW),
         }
-        debugToConsole(f"REQUEST: {url}")
+        logger.debug(
+            "api-request",
+            info={
+                "url": url,
+                "with_api_key": bool(self.APIKEY != ""),
+                "public_or_private": "private",
+                "method": method,
+            },
+        )
         if method == "DELETE":
             r = delete(url, headers=headers)
         elif method == "POST":
@@ -489,7 +485,7 @@ class Bitvavo:
         postfix = createPostfix(options)
         return self.publicRequest(f"{self.base}/assets{postfix}")
 
-    def book(self, market: str, options: intdict) -> Dict[str, Union[str, int, List[str]]]:
+    def book(self, market: str, options: intdict) -> Union[Dict[str, Union[str, int, List[str]]], errordict]:
         """Get a book (with two lists: asks and bids, as they're called)
 
         ---
@@ -1575,14 +1571,14 @@ class Bitvavo:
 
         def doSend(self, ws: WebSocketApp, message: str, private: bool = False) -> None:  # type: ignore
             if private and self.APIKEY == "":
-                errorToConsole("You did not set the API key, but requested a private function.")
+                logger.error("no-apikey", tip="set the API key to be able to make private API calls")
                 return
             self.waitForSocket(ws, message, private)
             ws.send(message)
-            debugToConsole("SENT: " + message)
+            logger.debug("message-sent", message=message)
 
         def on_message(self, ws: WebSocketApp, msg: str) -> None:  # type: ignore # noqa: C901 (too-complex)
-            debugToConsole(f"RECEIVED: {msg}")
+            logger.debug("message-received", message=msg)
             msg_dict: anydict = json.loads(msg)
             callbacks = self.callbacks
 
@@ -1592,7 +1588,7 @@ class Bitvavo:
                 if "error" in callbacks:
                     callbacks["error"](msg_dict)
                 else:
-                    errorToConsole(msg_dict)
+                    logger.error(msg_dict)
 
             if "action" in msg_dict:
                 if msg_dict["action"] == "getTime":
@@ -1683,11 +1679,11 @@ class Bitvavo:
             if "error" in self.callbacks:
                 self.callbacks["error"](error)
             else:
-                errorToConsole(error)
+                logger.error(error)
 
         def on_close(self, ws: WebSocketApp):  # type: ignore
             self.receiveThread.stop()
-            debugToConsole("Closed Websocket.")
+            logger.debug("websocket-closed")
 
         def checkReconnect(self) -> None:  # noqa: C901 (too-complex)
             if "subscriptionTicker" in self.callbacks:
@@ -1735,7 +1731,7 @@ class Bitvavo:
                     ),
                 )
             if self.reconnect:
-                debugToConsole("we started reconnecting")
+                logger.debug("reconnecting")
                 thread = Thread(target=self.checkReconnect)
                 thread.start()
 
