@@ -4,10 +4,11 @@ run `pytest --fixtures` to see what's available within a test_* function
 import logging
 import os
 
-from dotenv.main import load_dotenv
-from pytest import fixture
+from dotenv.main import load_dotenv  # type: ignore
+from pytest import fixture  # type: ignore
 
 from bitvavo_api_upgraded.bitvavo import Bitvavo
+from typing import Any
 
 load_dotenv()  # load variables from `.env` file
 
@@ -15,7 +16,7 @@ logger = logging.getLogger("conftest")
 
 
 @fixture(scope="session")
-def bitvavo():
+def bitvavo() -> Bitvavo:
     return Bitvavo(
         {
             # create a file called .env and put the keys there
@@ -30,8 +31,8 @@ def bitvavo():
 
 
 @fixture(scope="session")
-def websocket(bitvavo: Bitvavo):
-    def errorCallback(error):
+def websocket(bitvavo: Bitvavo) -> Bitvavo.websocket:
+    def errorCallback(error: Any) -> None:
         logger.error(f"Error callback: {error}")
 
     bitvavo = Bitvavo(
