@@ -10,15 +10,12 @@ import websocket as ws_lib  # type: ignore
 from requests import delete, get, post, put  # type: ignore
 from websocket import WebSocketApp  # missing stubs for WebSocketApp
 
+from bitvavo_api_upgraded.helper_funcs import time_ms, time_to_wait
+from bitvavo_api_upgraded.type_aliases import anydict, errordict, intdict, ms, s_f, strdict
+
 debugging: bool = False
 
 logger = logging.getLogger("bitvavo-api-upgraded")
-
-# typealias that's used a LOT
-anydict = Dict[str, Any]
-strdict = Dict[str, str]
-intdict = Dict[str, int]
-errordict = Dict[str, Any]  # same type as anydict, but the semantics/meaning is different
 
 
 def debugToConsole(message: Any) -> None:
@@ -44,7 +41,7 @@ def errorToConsole(message: Any) -> None:
     logger.error(message)
 
 
-def createSignature(timestamp: int, method: str, url: str, body: anydict, APISECRET: str) -> str:
+def createSignature(timestamp: ms, method: str, url: str, body: anydict, APISECRET: str) -> str:
     string = f"{timestamp}{method}/v2{url}"
     if len(body.keys()) != 0:
         string += json.dumps(body, separators=(",", ":"))
@@ -129,25 +126,25 @@ def processLocalBook(ws: "Bitvavo.websocket", message: anydict) -> None:
 
 
 class rateLimitThread(Thread):
-    def __init__(self, reset: float, bitvavo: "Bitvavo"):
+    def __init__(self, reset: s_f, bitvavo: "Bitvavo"):
         self.timeToWait = reset
         self.bitvavo = bitvavo
         Thread.__init__(self)
 
-    def waitForReset(self, waitTime: float) -> None:
+    def waitForReset(self, waitTime: s_f) -> None:
+        # prevent negative waitTime
+        if waitTime < 0:
+            waitTime = 0.001  # 1ms
         time.sleep(waitTime)
-        if time.time() < self.bitvavo.rateLimitReset:
+        if time_ms() < self.bitvavo.rateLimitResetAt:
             self.bitvavo.rateLimitRemaining = 1000
             debugToConsole("Ban should have been lifted, resetting rate limit to 1000.")
         else:
-            timeToWait = (self.bitvavo.rateLimitReset / 1000) - time.time()
+            timeToWait = time_to_wait(self.bitvavo.rateLimitResetAt)
             debugToConsole(f"Ban took longer than expected, sleeping again for {timeToWait} seconds.")
             self.waitForReset(timeToWait)
 
     def run(self) -> None:
-        if self.timeToWait < 0:
-            self.timeToWait = 0.001  # 1ms
-
         self.waitForReset(self.timeToWait)
 
 
@@ -243,7 +240,7 @@ class Bitvavo:
         self.APIKEY: str = ""
         self.APISECRET: str = ""
         self.rateLimitRemaining: int = 1000
-        self.rateLimitReset: int = 0
+        self.rateLimitResetAt: ms = 0
         global debugging
         debugging = False
         for key in options:
@@ -277,8 +274,12 @@ class Bitvavo:
         if "errorCode" in response:
             if response["errorCode"] == 105:
                 self.rateLimitRemaining = 0
-                self.rateLimitReset = int(response["error"].split(" at ")[1].split(".")[0])
-                timeToWait = (self.rateLimitReset / 1000) - time.time()
+                # rateLimitResetAt is a value that's stripped from a string.
+                # Kind of a terrible way to pass that information, but eh, whatever, I guess...
+                # Anyway, here is the string that's being pulled apart:
+                # "Your IP or API key has been banned for not respecting the rate limit. The ban expires at ${expiryInMs}""
+                self.rateLimitResetAt = ms(response["error"].split(" at ")[1].split(".")[0])
+                timeToWait = time_to_wait(self.rateLimitResetAt)
                 if not hasattr(self, "rateLimitThread"):
                     self.rateLimitThread = rateLimitThread(timeToWait, self)
                     self.rateLimitThread.daemon = True
@@ -287,8 +288,8 @@ class Bitvavo:
         if "Bitvavo-Ratelimit-Remaining" in response:
             self.rateLimitRemaining = int(response["Bitvavo-Ratelimit-Remaining"])
         if "Bitvavo-Ratelimit-ResetAt" in response:
-            self.rateLimitReset = int(response["Bitvavo-Ratelimit-ResetAt"])
-            timeToWait = (self.rateLimitReset / 1000) - time.time()
+            self.rateLimitResetAt = int(response["Bitvavo-Ratelimit-ResetAt"])
+            timeToWait = time_to_wait(self.rateLimitResetAt)
             if not hasattr(self, "rateLimitThread"):
                 self.rateLimitThread = rateLimitThread(timeToWait, self)
                 self.rateLimitThread.daemon = True
@@ -1556,7 +1557,7 @@ class Bitvavo:
             self.callbacks: anydict = {}
             self.keepAlive = True
             self.reconnect = False
-            self.reconnectTimer = 0.1
+            self.reconnectTimer: s_f = 0.1
             self.bitvavo = bitvavo
 
             self.subscribe()
