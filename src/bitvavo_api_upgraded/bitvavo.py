@@ -125,30 +125,6 @@ def processLocalBook(ws: "Bitvavo.websocket", message: anydict) -> None:
         ws.callbacks["subscriptionBookUser"][market](ws.localBook[market])
 
 
-class rateLimitThread(Thread):
-    def __init__(self, reset: s_f, bitvavo: "Bitvavo"):
-        debugToConsole("Created a separate thread that waits until the rate limit can be reset (and then resets it)")
-        self.timeToWait = reset
-        self.bitvavo = bitvavo
-        Thread.__init__(self)
-
-    def waitForReset(self, waitTime: s_f) -> None:
-        # prevent negative waitTime
-        if waitTime < 0:
-            waitTime = 0.001  # 1ms
-        time.sleep(waitTime)
-        if time_ms() > self.bitvavo.rateLimitResetAt:
-            self.bitvavo.rateLimitRemaining = 1000
-            debugToConsole("Ban should have been lifted, resetting rate limit to 1000.")
-        else:
-            timeToWait = time_to_wait(self.bitvavo.rateLimitResetAt)
-            debugToConsole(f"Ban took longer than expected, sleeping again for {timeToWait} seconds.")
-            self.waitForReset(timeToWait)
-
-    def run(self) -> None:
-        self.waitForReset(self.timeToWait)
-
-
 class receiveThread(Thread):
     def __init__(self, ws: WebSocketApp, wsObject: "Bitvavo.websocket"):  # type: ignore
         self.ws = ws
@@ -260,7 +236,6 @@ class Bitvavo:
         debugToConsole(f"updateRateLimit: {response}")
         if "errorCode" in response:
             if response["errorCode"] == 105:
-                debugToConsole("You got banned!")
                 self.rateLimitRemaining = 0
                 # rateLimitResetAt is a value that's stripped from a string.
                 # Kind of a terrible way to pass that information, but eh, whatever, I guess...
@@ -268,20 +243,12 @@ class Bitvavo:
                 # "Your IP or API key has been banned for not respecting the rate limit. The ban expires at ${expiryInMs}""
                 self.rateLimitResetAt = ms(response["error"].split(" at ")[1].split(".")[0])
                 timeToWait = time_to_wait(self.rateLimitResetAt)
-                if not hasattr(self, "rateLimitThread"):
-                    self.rateLimitThread = rateLimitThread(timeToWait, self)
-                    self.rateLimitThread.daemon = True
-                    self.rateLimitThread.start()
-            # setTimeout(checkLimit, timeToWait)
+                debugToConsole(f"You got banned! Sleeping for {timeToWait + 1} seconds, and by then you'll by unbanned")
+                time.sleep(timeToWait + 1)  # plus one second to ENSURE we're able to run again.
         if "Bitvavo-Ratelimit-Remaining" in response:
             self.rateLimitRemaining = int(response["Bitvavo-Ratelimit-Remaining"])
         if "Bitvavo-Ratelimit-ResetAt" in response:
             self.rateLimitResetAt = int(response["Bitvavo-Ratelimit-ResetAt"])
-            timeToWait = time_to_wait(self.rateLimitResetAt)
-            if not hasattr(self, "rateLimitThread"):
-                self.rateLimitThread = rateLimitThread(timeToWait, self)
-                self.rateLimitThread.daemon = True
-                self.rateLimitThread.start()
 
     def publicRequest(self, url: str) -> Union[List[anydict], List[List[str]], intdict, strdict, anydict, errordict]:
         """Execute a request to the public part of the API; no API key and/or SECRET necessary.
