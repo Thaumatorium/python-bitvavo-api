@@ -1,5 +1,11 @@
 # Changelog
 
+## $UNRELEASED
+
+### Changed
+
+- fixed a critical bug that broke the `Bitvavo` class
+
 ## v1.8.3 - 2022-01-15
 
 ### Changed
