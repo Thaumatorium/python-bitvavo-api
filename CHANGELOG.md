@@ -1,5 +1,11 @@
 # Changelog
 
+## $UNRELEASED
+
+### Changed
+
+- `time_to_wait` now _always_ returns a positive number. I'm getting sick of sleep getting a negative number
+
 ## v1.8.1 - 2022-01-15
 
 ### Added
