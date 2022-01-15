@@ -7,7 +7,7 @@ import logging
 from time import sleep
 from typing import Any, Dict, List, Union
 
-from pytest import CaptureFixture, LogCaptureFixture, mark
+from pytest import CaptureFixture, LogCaptureFixture, mark  # type: ignore
 
 from bitvavo_api_upgraded.bitvavo import (
     Bitvavo,
@@ -30,7 +30,7 @@ logger = logging.getLogger("test_bitvavo")
 """
 
 
-def test_createPostfix_happy_path():
+def test_createPostfix_happy_path() -> None:
     input = {
         "option1": "value1",
         "option2": "value2",
@@ -43,7 +43,7 @@ def test_createPostfix_happy_path():
     assert output == "?option1=value1&option2=value2&option3=3&option4=['yeet', 'yote']"
 
 
-def test_createPostfix_empty_input():
+def test_createPostfix_empty_input() -> None:
     input: anydict = {}
 
     output = createPostfix(input)
@@ -51,7 +51,7 @@ def test_createPostfix_empty_input():
     assert output == ""
 
 
-def test_asksCompare():
+def test_asksCompare() -> None:
     """asksCompare() returns a bool, so I'm asserting directly"""
     assert asksCompare(-1, -1) is False
     assert asksCompare(-1, 0)
@@ -64,7 +64,7 @@ def test_asksCompare():
     assert asksCompare(1, 1) is False
 
 
-def test_bidsCompare():
+def test_bidsCompare() -> None:
     """asksCompare() returns a bool, so I'm asserting directly"""
     assert bidsCompare(-1, -1) is False
     assert bidsCompare(-1, 0) is False
@@ -80,11 +80,11 @@ def test_bidsCompare():
 class TestBitvavo:
     """this class functions as a grouping of tests, as the code is"""
 
-    def test_remaining_limit(self, bitvavo: Bitvavo):
+    def test_remaining_limit(self, bitvavo: Bitvavo) -> None:
         limit = bitvavo.getRemainingLimit()
         assert 0 < limit and limit <= 1000, "default remaining limit should be between 1000 and 0"
 
-    def test_no_error(self, bitvavo: Bitvavo):
+    def test_no_error(self, bitvavo: Bitvavo) -> None:
         """
         Any call to bitvavo should produce no errors.
 
@@ -159,13 +159,13 @@ class TestBitvavo:
         assert "error" not in response
         assert "errorCode" not in response
 
-    def test_time(self, bitvavo: Bitvavo):
+    def test_time(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.time()
         assert isinstance(response, dict)
         assert "time" in response
         assert isinstance(response["time"], int)
 
-    def test_markets_all(self, bitvavo: Bitvavo):
+    def test_markets_all(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.markets(options={})
 
         assert isinstance(response, List)
@@ -198,7 +198,7 @@ class TestBitvavo:
             assert float(market["minOrderInBaseAsset"]) >= 0
             assert float(market["minOrderInQuoteAsset"]) >= 0
 
-    def test_markets_single(self, bitvavo: Bitvavo):
+    def test_markets_single(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.markets(options={"market": "BTC-EUR"})
 
         assert isinstance(response, Dict)
@@ -228,7 +228,7 @@ class TestBitvavo:
         assert float(response["minOrderInBaseAsset"]) >= 0
         assert float(response["minOrderInQuoteAsset"]) >= 0
 
-    def test_assets(self, bitvavo: Bitvavo):
+    def test_assets(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.assets(options={})
         assert isinstance(response, list)
         if len(response) > 0:
@@ -266,7 +266,7 @@ class TestBitvavo:
             assert isinstance(asset["networks"], list)  # so far it's always a list of one string.
             assert isinstance(asset["message"], str)
 
-    def test_book(self, bitvavo: Bitvavo):
+    def test_book(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.book(market="BTC-EUR", options={})
 
         assert isinstance(response, Dict)
@@ -283,26 +283,28 @@ class TestBitvavo:
         assert isinstance(response["nonce"], int)  # not a value that should ever be 0
         assert isinstance(response["asks"], List)
         if len(response["asks"]) > 0:
-            ask = response["asks"][0]  # grab the 0th ask
+            ask: List[str] = response["asks"][0]  # grab the 0th ask
             assert isinstance(ask, List)  # for some weird reason, asks and bids are lists
+            assert isinstance(ask[0], str)
         assert isinstance(response["bids"], List)
         if len(response["bids"]) > 0:
-            bid = response["bids"][0]  # grab the 0th bid
+            bid: List[str] = response["bids"][0]  # grab the 0th bid
             assert isinstance(bid, List)
+            assert isinstance(bid[0], str)
 
         # check data conversion possibilities
         if len(response["asks"]) > 0:
             # first item in asks list is ALSO a list!
-            ask = response["asks"][0]  # grab the 0th ask
+            ask: List[str] = response["asks"][0]  # grab the 0th ask
             assert int(ask[0]) >= 0, "zeroth item should be an int"
             assert float(ask[1]) >= 0, "oneth item should be a float"
         if len(response["bids"]) > 0:
             # first item in bids list is ALSO a list!
-            bid = response["bids"][0]  # grab the 0th bid
+            bid: List[str] = response["bids"][0]  # grab the 0th bid
             assert int(bid[0]) >= 0, "zeroth item should be an int"
             assert float(bid[1]) >= 0, "oneth item should be a float"
 
-    def test_public_trades(self, bitvavo: Bitvavo):
+    def test_public_trades(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.publicTrades(market="BTC-EUR", options={})
 
         assert isinstance(response, List)
@@ -327,7 +329,7 @@ class TestBitvavo:
             assert float(public_trade["amount"]) >= 0
             assert float(public_trade["price"]) >= 0
 
-    def test_candle(self, bitvavo: Bitvavo):
+    def test_candle(self, bitvavo: Bitvavo) -> None:
         """This is one of the weirder results: a list of lists"""
         # Timestamp: candle[0], open: candle[1], high: candle[2], low: candle[3], close: candle[4], volume: candle[5]
         response = bitvavo.candles(market="BTC-EUR", interval="1h", options={})
@@ -348,7 +350,7 @@ class TestBitvavo:
             assert int(candle[4]) >= 0  # close
             assert float(candle[5]) >= 0  # volume
 
-    def test_ticker_price_all(self, bitvavo: Bitvavo):
+    def test_ticker_price_all(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.tickerPrice(options={})
 
         assert isinstance(response, List)
@@ -364,7 +366,7 @@ class TestBitvavo:
             assert isinstance(ticker_price["market"], str)
             assert isinstance(ticker_price["price"], str)
 
-    def test_ticker_price_single(self, bitvavo: Bitvavo):
+    def test_ticker_price_single(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.tickerPrice(options={"market": "BTC-EUR"})
 
         assert isinstance(response, Dict)
@@ -381,7 +383,7 @@ class TestBitvavo:
         # convertable types
         assert float(response["price"]) >= 0
 
-    def test_ticker_book_all(self, bitvavo: Bitvavo):
+    def test_ticker_book_all(self, bitvavo: Bitvavo) -> None:
         """
         Don't worry too much about the *-BTC markets, as they are not used (and thus not visible on the website)
         """
@@ -430,7 +432,7 @@ class TestBitvavo:
                 assert float(ticker_book["ask"]) >= 0
                 assert float(ticker_book["askSize"]) >= 0
 
-    def test_ticker_book_single(self, bitvavo: Bitvavo):
+    def test_ticker_book_single(self, bitvavo: Bitvavo) -> None:
         """
         Don't worry too much about the *-BTC markets, as they are not used (and thus not visible on the website)
         """
@@ -476,7 +478,7 @@ class TestBitvavo:
             assert float(response["ask"]) >= 0
             assert float(response["askSize"]) >= 0
 
-    def test_ticker_24h_all(self, bitvavo: Bitvavo):
+    def test_ticker_24h_all(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.ticker24h(options={})
 
         assert isinstance(response, List)
@@ -527,7 +529,7 @@ class TestBitvavo:
                 assert float(ticker_24h["askSize"]) >= 0
                 assert int(ticker_24h["timestamp"])
 
-    def test_ticker_24h_single(self, bitvavo: Bitvavo):
+    def test_ticker_24h_single(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.ticker24h(options={"market": "BTC-EUR"})
 
         assert isinstance(response, Dict)
@@ -576,7 +578,7 @@ class TestBitvavo:
             assert int(response["timestamp"])
 
     @mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
-    def test_place_order_buy(self, bitvavo: Bitvavo):
+    def test_place_order_buy(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.placeOrder(
             market="BTC-EUR",
             side="buy",
@@ -586,7 +588,7 @@ class TestBitvavo:
         print(json.dumps(response, indent=2))
 
     @mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
-    def test_place_order_sell(self, bitvavo: Bitvavo):
+    def test_place_order_sell(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.placeOrder(
             market="BTC-EUR",
             side="sell",
@@ -595,7 +597,7 @@ class TestBitvavo:
         )
         print(json.dumps(response, indent=2))
 
-    def test_get_order(self, bitvavo: Bitvavo):
+    def test_get_order(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.getOrder(market="BTC-EUR", orderId="dd055772-0f02-493c-a049-f4356fa0d221")
 
         assert isinstance(response, dict)  # errordict
@@ -607,7 +609,7 @@ class TestBitvavo:
         assert response["error"] == long_str
         assert response["errorCode"] == 240
 
-    def test_update_order(self, bitvavo: Bitvavo):
+    def test_update_order(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.updateOrder(
             market="BTC-EUR",
             orderId="dd055772-0f02-493c-a049-f4356fa0d221",
@@ -622,7 +624,7 @@ class TestBitvavo:
             == "No order found. Please be aware that simultaneously updating the same order may return this error."
         )
 
-    def test_cancel_order(self, bitvavo: Bitvavo):
+    def test_cancel_order(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.cancelOrder(market="BTC-EUR", orderId="dd055772-0f02-493c-a049-f4356fa0d221")
         assert len(response) == 2
         assert "errorCode" in response
@@ -633,12 +635,12 @@ class TestBitvavo:
             == "No order found. Please be aware that simultaneously updating the same order may return this error."
         )
 
-    def test_get_orders(self, bitvavo: Bitvavo):
+    def test_get_orders(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.getOrders(market="BTC-EUR", options={})
         assert response == []  # at least it's not an error or something
 
     @mark.skip(reason="I'm not touching methods where I can accidentally cancel all my orders")
-    def test_cancel_orders_all(self, bitvavo: Bitvavo):
+    def test_cancel_orders_all(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.cancelOrders(options={})
 
         assert isinstance(response, dict)  # errordict
@@ -649,7 +651,7 @@ class TestBitvavo:
         assert response["error"] == "This key does not allowing showing account information."
 
     @mark.skip(reason="I'm not touching methods where I can accidentally cancel all my orders")
-    def test_cancel_orders_one_market(self, bitvavo: Bitvavo):
+    def test_cancel_orders_one_market(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.cancelOrders(options={"market": "BTC-EUR"})
 
         assert isinstance(response, dict)  # errordict
@@ -659,7 +661,7 @@ class TestBitvavo:
         assert response["errorCode"] == 311
         assert response["error"] == "This key does not allowing showing account information."
 
-    def test_orders_open_list_all(self, bitvavo: Bitvavo):
+    def test_orders_open_list_all(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.ordersOpen(options={})
 
         if isinstance(response, list):
@@ -725,7 +727,7 @@ class TestBitvavo:
                 assert item["selfTradePrevention"] in ["decrementAndCancel"]
                 assert item["timeInForce"] in ["GTC"]
 
-    def test_orders_open_list_single(self, bitvavo: Bitvavo):
+    def test_orders_open_list_single(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.ordersOpen(options={"market": "DIA-EUR"})
 
         if isinstance(response, list):
@@ -791,11 +793,11 @@ class TestBitvavo:
                 assert item["selfTradePrevention"] in ["decrementAndCancel"]
                 assert item["timeInForce"] in ["GTC"]
 
-    def test_trades(self, bitvavo: Bitvavo):
+    def test_trades(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.trades(market="BTC-EUR", options={})
         assert response == []
 
-    def test_account(self, bitvavo: Bitvavo):
+    def test_account(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.account()
 
         assert len(response) == 1
@@ -809,7 +811,7 @@ class TestBitvavo:
         assert float(response["fees"]["maker"]) >= 0
         assert float(response["fees"]["volume"]) >= 0
 
-    def test_balance_all(self, bitvavo: Bitvavo):
+    def test_balance_all(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.balance(options={})
 
         assert isinstance(response, list)
@@ -829,7 +831,7 @@ class TestBitvavo:
             assert float(item["available"]) >= 0
             assert float(item["inOrder"]) >= 0
 
-    def test_balance_single(self, bitvavo: Bitvavo):
+    def test_balance_single(self, bitvavo: Bitvavo) -> None:
         """
         `balance()` is weird, as even if you return only one item, you still get it in a list, when the other methods
         would only return a single item. So yeah, this is the only `_single` method that gets a list, with one item...
@@ -855,7 +857,7 @@ class TestBitvavo:
         assert float(item["available"]) >= 0
         assert float(item["inOrder"]) >= 0
 
-    def test_deposit_assets_coin(self, bitvavo: Bitvavo):
+    def test_deposit_assets_coin(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.depositAssets("BTC")
 
         assert isinstance(response, dict)
@@ -863,7 +865,7 @@ class TestBitvavo:
         assert "address" in response
         assert isinstance(response["address"], str)
 
-    def test_deposit_assets_token(self, bitvavo: Bitvavo):
+    def test_deposit_assets_token(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.depositAssets("SHIB")
 
         assert isinstance(response, dict)
@@ -872,7 +874,7 @@ class TestBitvavo:
         assert isinstance(response["address"], str)
         assert response["address"].startswith("0x")  # only counts for SHIB (?)
 
-    def test_deposit_assets_fiat(self, bitvavo: Bitvavo):
+    def test_deposit_assets_fiat(self, bitvavo: Bitvavo) -> None:
         # This should be Bitvavo's EUR address, not a personal one
         response = bitvavo.depositAssets("EUR")
 
@@ -890,7 +892,7 @@ class TestBitvavo:
 
         assert response["qr"].startswith("data:image/png;base64,")
 
-    def test_withdraw_assets(self, bitvavo: Bitvavo):
+    def test_withdraw_assets(self, bitvavo: Bitvavo) -> None:
         bitcoin_address = "SomeBitcoinAddress"  # Keep this fake or non-existant, otherwise you're passing money around when testing...
         response = bitvavo.withdrawAssets("BTC", "1", bitcoin_address, {})
 
@@ -900,7 +902,7 @@ class TestBitvavo:
         assert response["errorCode"] == 412
         assert response["error"] == "double_submit."
 
-    def test_deposit_history_all(self, bitvavo: Bitvavo):
+    def test_deposit_history_all(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.depositHistory(options={})
 
         assert isinstance(response, List)
@@ -928,7 +930,7 @@ class TestBitvavo:
             assert float(item["amount"]) >= 0
             assert float(item["fee"]) >= 0
 
-    def test_deposit_history_single(self, bitvavo: Bitvavo):
+    def test_deposit_history_single(self, bitvavo: Bitvavo) -> None:
         """
         Note That you'll still receive multiple results, as "symbol" is not unique within the deposit history.
         """
@@ -964,7 +966,7 @@ class TestBitvavo:
             assert float(item["amount"]) >= 0
             assert float(item["fee"]) >= 0
 
-    def test_withdrawal_history_all(self, bitvavo: Bitvavo):
+    def test_withdrawal_history_all(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.withdrawalHistory(options={})
         assert isinstance(response, list)
         for item in response:
@@ -1002,7 +1004,7 @@ class TestBitvavo:
                 "canceled",
             ]  # from docs.bitvavo.com (hidden under "200 successful operation")
 
-    def test_withdrawal_history_single(self, bitvavo: Bitvavo):
+    def test_withdrawal_history_single(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.withdrawalHistory(options={"symbol": "SHIB"})
         assert isinstance(response, list)
         for item in response:
@@ -1071,7 +1073,7 @@ class TestWebsocket:
     of experience and *need* to use a websocket for your use case :)
     """
 
-    def wait(self):
+    def wait(self) -> None:
         """
         Helper method that you must run after making a websocket call.
         This method waits for some time in the hopes that the websocket is done within that time.
@@ -1081,13 +1083,13 @@ class TestWebsocket:
         # If all websocket tests fail, just up this number
         sleep(1)
 
-    def test_set_error_callback(self, websocket: Bitvavo.websocket):
+    def test_set_error_callback(self, websocket: Bitvavo.websocket) -> None:
         websocket.setErrorCallback(error_callback_example)
 
         assert "error" in websocket.callbacks
         assert websocket.callbacks["error"] == error_callback_example
 
-    def test_time(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket):
+    def test_time(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
         try:
             websocket.time(generic_callback)
             self.wait()
@@ -1098,7 +1100,7 @@ class TestWebsocket:
         except TypeError:
             assert False
 
-    def test_markets(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket):
+    def test_markets(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
         websocket.markets(options={"market": "BTC-EUR"}, callback=generic_callback)
         self.wait()
 
@@ -1107,7 +1109,7 @@ class TestWebsocket:
         assert stderr == ""
         assert 'generic_callback: {\n  "market": "BTC-EUR",\n  "status": "trading"' in stdout
 
-    def test_assets(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket):
+    def test_assets(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
         websocket.assets(options={}, callback=generic_callback)
         self.wait()
 
@@ -1116,7 +1118,7 @@ class TestWebsocket:
         assert stderr == ""
         assert 'generic_callback: [\n  {\n    "symbol": "1INCH",\n    "name": "1inch"' in stdout
 
-    def test_book(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket):
+    def test_book(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
         websocket.book(market="BTC-EUR", options={}, callback=generic_callback)
         self.wait()
         self.wait()  # slower function; needs a bit more time
@@ -1126,7 +1128,7 @@ class TestWebsocket:
         assert stderr == ""
         assert 'generic_callback: {\n  "market": "BTC-EUR",\n  "nonce":' in stdout
 
-    def test_public_trades(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket):
+    def test_public_trades(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
         websocket.publicTrades(market="BTC-EUR", options={}, callback=generic_callback)
         self.wait()
 
@@ -1135,7 +1137,7 @@ class TestWebsocket:
         assert stderr == ""
         assert 'generic_callback: [\n  {\n    "id": "' in stdout
 
-    def test_candles(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket):
+    def test_candles(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
         websocket.candles(market="BTC-EUR", interval="1h", options={}, callback=generic_callback)
         self.wait()
 
@@ -1144,7 +1146,7 @@ class TestWebsocket:
         assert stderr == ""
         assert "generic_callback: [\n  [\n    " in stdout
 
-    def test_ticker_24h(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket):
+    def test_ticker_24h(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
         websocket.ticker24h(options={}, callback=generic_callback)
         self.wait()
 
@@ -1153,7 +1155,7 @@ class TestWebsocket:
         assert stderr == ""
         assert 'generic_callback: [\n  {\n    "market": "1INCH-EUR",\n    "open":' in stdout
 
-    def test_ticker_price(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket):
+    def test_ticker_price(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
         websocket.tickerPrice(options={}, callback=generic_callback)
         self.wait()
 
@@ -1162,7 +1164,7 @@ class TestWebsocket:
         assert stderr == ""
         assert 'generic_callback: [\n  {\n    "market": "1INCH-EUR",\n    "price": ' in stdout
 
-    def test_ticker_book(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket):
+    def test_ticker_book(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
         websocket.tickerBook(options={}, callback=generic_callback)
         self.wait()
 
@@ -1172,7 +1174,7 @@ class TestWebsocket:
         assert 'generic_callback: [\n  {\n    "market": "1INCH-EUR",\n    "bid": ' in stdout
 
     @mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
-    def test_place_order(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket):
+    def test_place_order(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
         websocket.placeOrder(
             market="BTC-EUR",
             side="buy",
@@ -1181,7 +1183,7 @@ class TestWebsocket:
             callback=generic_callback,
         )
 
-    def test_get_order(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket):
+    def test_get_order(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
         websocket.getOrder(market="BTC-EUR", orderId="6d0dffa7-07fe-448e-9928-233821e7cdb5", callback=generic_callback)
         self.wait()
 
@@ -1195,7 +1197,7 @@ class TestWebsocket:
         assert stdout == ""
 
     @mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
-    def test_update_order(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket):
+    def test_update_order(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
         websocket.updateOrder(
             market="BTC-EUR",
             orderId="6d0dffa7-07fe-448e-9928-233821e7cdb5",
@@ -1204,14 +1206,14 @@ class TestWebsocket:
         )
 
     @mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
-    def test_cancel_order(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket):
+    def test_cancel_order(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
         websocket.cancelOrder(
             market="BTC-EUR",
             orderId="6d0dffa7-07fe-448e-9928-233821e7cdb5",
             callback=generic_callback,
         )
 
-    def test_get_orders(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket):
+    def test_get_orders(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
         websocket.getOrders(market="BTC-EUR", options={}, callback=generic_callback)
         self.wait()
 
@@ -1221,10 +1223,10 @@ class TestWebsocket:
         assert "generic_callback: []\n" in stdout
 
     @mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
-    def test_cancel_orders(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket):
+    def test_cancel_orders(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
         websocket.cancelOrders(options={"market": "BTC-EUR"}, callback=generic_callback)
 
-    def test_orders_open(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket):
+    def test_orders_open(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
         websocket.ordersOpen(options={}, callback=generic_callback)
         self.wait()
 
@@ -1233,7 +1235,7 @@ class TestWebsocket:
         assert stderr == ""
         assert 'generic_callback: [\n  {\n    "orderId": ' in stdout
 
-    def test_trades(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket):
+    def test_trades(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
         websocket.trades(market="BTC-EUR", options={}, callback=generic_callback)
         self.wait()
 
@@ -1242,7 +1244,7 @@ class TestWebsocket:
         assert stderr == ""
         assert "generic_callback: []\n" in stdout
 
-    def test_account(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket):
+    def test_account(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
         websocket.account(callback=generic_callback)
         self.wait()
 
@@ -1251,7 +1253,7 @@ class TestWebsocket:
         assert stderr == ""
         assert 'generic_callback: {\n  "fees": {\n    "taker": ' in stdout
 
-    def test_balance(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket):
+    def test_balance(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
         websocket.balance(options={}, callback=generic_callback)
         self.wait()
 
@@ -1261,7 +1263,7 @@ class TestWebsocket:
         assert 'generic_callback: [\n  {\n    "symbol": ' in stdout
 
     @mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
-    def test_deposit_assets(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket):
+    def test_deposit_assets(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
         websocket.depositAssets("BTC", callback=generic_callback)
 
     @mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
@@ -1270,7 +1272,7 @@ class TestWebsocket:
         caplog: LogCaptureFixture,
         capsys: CaptureFixture[str],
         websocket: Bitvavo.websocket,
-    ):
+    ) -> None:
         websocket.withdrawAssets(symbol="BTC", amount="1", address="BitcoinAddress", body={}, callback=generic_callback)
 
     def test_deposit_history(
@@ -1278,7 +1280,7 @@ class TestWebsocket:
         caplog: LogCaptureFixture,
         capsys: CaptureFixture[str],
         websocket: Bitvavo.websocket,
-    ):
+    ) -> None:
         websocket.depositHistory(options={}, callback=generic_callback)
         self.wait()
 
@@ -1292,7 +1294,7 @@ class TestWebsocket:
         caplog: LogCaptureFixture,
         capsys: CaptureFixture[str],
         websocket: Bitvavo.websocket,
-    ):
+    ) -> None:
         websocket.withdrawalHistory(options={}, callback=generic_callback)
         self.wait()
 
@@ -1307,7 +1309,7 @@ class TestWebsocket:
         caplog: LogCaptureFixture,
         capsys: CaptureFixture[str],
         websocket: Bitvavo.websocket,
-    ):
+    ) -> None:
         websocket.subscriptionTicker(market="BTC-EUR", callback=generic_callback)
         self.wait()
         self.wait()
@@ -1324,7 +1326,7 @@ class TestWebsocket:
         caplog: LogCaptureFixture,
         capsys: CaptureFixture[str],
         websocket: Bitvavo.websocket,
-    ):
+    ) -> None:
         websocket.subscriptionTicker24h(market="BTC-EUR", callback=generic_callback)
         self.wait()
         self.wait()
@@ -1341,7 +1343,7 @@ class TestWebsocket:
         caplog: LogCaptureFixture,
         capsys: CaptureFixture[str],
         websocket: Bitvavo.websocket,
-    ):
+    ) -> None:
         websocket.subscriptionAccount(market="BTC-EUR", callback=generic_callback)
         self.wait()
         self.wait()
@@ -1358,7 +1360,7 @@ class TestWebsocket:
         caplog: LogCaptureFixture,
         capsys: CaptureFixture[str],
         websocket: Bitvavo.websocket,
-    ):
+    ) -> None:
         websocket.subscriptionCandles(market="BTC-EUR", interval="1h", callback=generic_callback)
         self.wait()
         self.wait()
@@ -1378,7 +1380,7 @@ class TestWebsocket:
         caplog: LogCaptureFixture,
         capsys: CaptureFixture[str],
         websocket: Bitvavo.websocket,
-    ):
+    ) -> None:
         websocket.subscriptionTrades(market="BTC-EUR", callback=generic_callback)
         self.wait()
         self.wait()
@@ -1395,7 +1397,7 @@ class TestWebsocket:
         caplog: LogCaptureFixture,
         capsys: CaptureFixture[str],
         websocket: Bitvavo.websocket,
-    ):
+    ) -> None:
         websocket.subscriptionBookUpdate(market="BTC-EUR", callback=generic_callback)
         self.wait()
         self.wait()
@@ -1412,7 +1414,7 @@ class TestWebsocket:
         caplog: LogCaptureFixture,
         capsys: CaptureFixture[str],
         websocket: Bitvavo.websocket,
-    ):
+    ) -> None:
         websocket.subscriptionBook(market="BTC-EUR", callback=generic_callback)
         self.wait()
         self.wait()
