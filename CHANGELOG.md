@@ -1,5 +1,17 @@
 # Changelog
 
+## $UNRELEASED
+
+### Changed
+
+- improve api calls by subtracting some client-server lag; This should make calls more stable
+- simplify Bitvavo constructor (doesn't change anything about the external API)
+- fix time_to_wait by checking whether curr_time > rateLimitResetAt
+
+### Removed
+
+- rateLimitThread, because it has been a pain in my ass. Using a regular `sleep()` is much better, I noticed.
+
 ## v1.8.2 - 2022-01-15
 
 ### Changed
