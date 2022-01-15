@@ -127,6 +127,7 @@ def processLocalBook(ws: "Bitvavo.websocket", message: anydict) -> None:
 
 class rateLimitThread(Thread):
     def __init__(self, reset: s_f, bitvavo: "Bitvavo"):
+        debugToConsole("Created a separate thread that waits until the rate limit can be reset (and then resets it)")
         self.timeToWait = reset
         self.bitvavo = bitvavo
         Thread.__init__(self)
@@ -136,7 +137,7 @@ class rateLimitThread(Thread):
         if waitTime < 0:
             waitTime = 0.001  # 1ms
         time.sleep(waitTime)
-        if time_ms() < self.bitvavo.rateLimitResetAt:
+        if time_ms() > self.bitvavo.rateLimitResetAt:
             self.bitvavo.rateLimitRemaining = 1000
             debugToConsole("Ban should have been lifted, resetting rate limit to 1000.")
         else:
@@ -234,30 +235,15 @@ def error_callback_example(msg: errordict) -> None:
 
 class Bitvavo:
     def __init__(self, options: Dict[str, Union[str, int]] = {}):
-        self.base: str = "https://api.bitvavo.com/v2"
-        self.wsUrl: str = "wss://ws.bitvavo.com/v2/"
-        self.ACCESSWINDOW: int = 0
-        self.APIKEY: str = ""
-        self.APISECRET: str = ""
+        self.base: str = str(options.get("resturl", "https://api.bitvavo.com/v2"))
+        self.wsUrl: str = str(options.get("wsurl", "wss://ws.bitvavo.com/v2/"))
+        self.ACCESSWINDOW = ms(options.get("accesswindow", 10000))
+        self.APIKEY = str(options.get("apikey", ""))
+        self.APISECRET = str(options.get("apisecret", ""))
         self.rateLimitRemaining: int = 1000
         self.rateLimitResetAt: ms = 0
         global debugging
-        debugging = False
-        for key in options:
-            if key.lower() == "apikey":
-                self.APIKEY = str(options[key])
-            elif key.lower() == "apisecret":
-                self.APISECRET = str(options[key])
-            elif key.lower() == "accesswindow":
-                self.ACCESSWINDOW = int(options[key])
-            elif key.lower() == "debugging":
-                debugging = bool(options[key])
-            elif key.lower() == "resturl":
-                self.base = str(options[key])
-            elif key.lower() == "wsurl":
-                self.wsUrl = str(options[key])
-        if self.ACCESSWINDOW == 0:
-            self.ACCESSWINDOW = 10000
+        debugging = bool(options.get("debugging", False))
 
     def getRemainingLimit(self) -> int:
         """Get the remaing rate limit
@@ -271,8 +257,10 @@ class Bitvavo:
         return self.rateLimitRemaining
 
     def updateRateLimit(self, response: anydict) -> None:
+        debugToConsole(f"updateRateLimit: {response}")
         if "errorCode" in response:
             if response["errorCode"] == 105:
+                debugToConsole("You got banned!")
                 self.rateLimitRemaining = 0
                 # rateLimitResetAt is a value that's stripped from a string.
                 # Kind of a terrible way to pass that information, but eh, whatever, I guess...
