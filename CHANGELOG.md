@@ -1,5 +1,16 @@
 # Changelog
 
+## $UNRELEASED
+
+### Added
+
+- type aliases! You can now use `s`, `ms`, `us`, instead of slapping `int` on everything! float versions `s_f`, `ms_f` and `us_f` are also available. You'll likely use `ms` and `s_f` most of the time :)
+- helper functions! I added `time_ms` and `time_to_wait` to hide some weird calculations behind functions.
+
+### Changed
+
+- improved the timing calculation and typing of certain values a bit
+
 ## v1.8.0 - 2022-01-11
 
 ### Changed
