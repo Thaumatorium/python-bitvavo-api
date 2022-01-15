@@ -211,16 +211,18 @@ def error_callback_example(msg: errordict) -> None:
 
 class Bitvavo:
     def __init__(self, options: Dict[str, Union[str, int]] = {}):
-        self.base: str = str(options.get("resturl", "https://api.bitvavo.com/v2"))
-        self.wsUrl: str = str(options.get("wsurl", "wss://ws.bitvavo.com/v2/"))
-        self.ACCESSWINDOW = ms(options.get("accesswindow", 10000))
-        self.APIKEY = str(options.get("apikey", ""))
-        self.APISECRET = str(options.get("apisecret", ""))
+        _options = {k.upper(): v for k, v in options.items()}
+        self.base: str = str(_options.get("RESTURL", "https://api.bitvavo.com/v2"))
+        self.wsUrl: str = str(_options.get("WSURL", "wss://ws.bitvavo.com/v2/"))
+        self.ACCESSWINDOW = ms(_options.get("ACCESSWINDOW", 10000))
+        self.APIKEY = str(_options.get("APIKEY", ""))
+        self.APISECRET = str(_options.get("APISECRET", ""))
         self.rateLimitRemaining: int = 1000
         self.rateLimitResetAt: ms = 0
         global debugging
+        self.lag = 0  # have to set it to 0, as it's ALSO used in calcLag 😅
         self.lag = self.calcLag()
-        debugging = bool(options.get("debugging", False))
+        debugging = bool(_options.get("DEBUGGING", False))
 
     def calcLag(self) -> ms:
         """

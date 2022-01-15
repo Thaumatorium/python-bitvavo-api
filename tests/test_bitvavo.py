@@ -82,7 +82,7 @@ class TestBitvavo:
 
     def test_remaining_limit(self, bitvavo: Bitvavo):
         limit = bitvavo.getRemainingLimit()
-        assert limit == 1000, "default remaining limit should be 1000"
+        assert 0 < limit and limit <= 1000, "default remaining limit should be between 1000 and 0"
 
     def test_no_error(self, bitvavo: Bitvavo):
         """
