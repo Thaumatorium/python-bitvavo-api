@@ -11,4 +11,9 @@ def time_ms() -> ms:
 
 
 def time_to_wait(rateLimitResetAt: ms) -> s_f:
-    return abs(s_f((rateLimitResetAt - time_ms()) / 1000))
+    curr_time = time_ms()
+    if curr_time > rateLimitResetAt:
+        # rateLimitRemaining has already reset
+        return 0
+    else:
+        return abs(s_f((rateLimitResetAt - curr_time) / 1000))
