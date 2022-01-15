@@ -69,6 +69,17 @@ show_traceback = false
 raise_exceptions = false
 warn_incomplete_stub = false
 
+[[tool.mypy.overrides]]
+module = [
+    "setuptools",
+    "structlog",
+    "requests",
+    "websocket",
+    "dotenv.main",
+    "pytest",
+]
+ignore_missing_imports = true
+
 # PROGRAM SETTINGS
 [tool.coverage.run]
 branch = true

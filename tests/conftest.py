@@ -5,8 +5,8 @@ import logging
 import os
 from typing import Any
 
-from dotenv.main import load_dotenv  # type: ignore
-from pytest import fixture  # type: ignore
+from dotenv.main import load_dotenv
+from pytest import fixture
 
 from bitvavo_api_upgraded.bitvavo import Bitvavo
 

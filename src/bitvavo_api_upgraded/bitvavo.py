@@ -6,15 +6,15 @@ from datetime import datetime, timedelta
 from threading import Thread
 from typing import Any, Callable, Dict, List, Union
 
-import websocket as ws_lib  # type: ignore
-from requests import delete, get, post, put  # type: ignore
-from structlog import get_logger  # type: ignore
+import websocket as ws_lib
+from requests import delete, get, post, put
+import structlog
 from websocket import WebSocketApp  # missing stubs for WebSocketApp
 
 from bitvavo_api_upgraded.helper_funcs import time_ms, time_to_wait
 from bitvavo_api_upgraded.type_aliases import anydict, errordict, intdict, ms, s_f, strdict
 
-logger = get_logger("bitvavo-api-upgraded")
+logger = structlog.get_logger("bitvavo-api-upgraded")
 
 
 def createSignature(timestamp: ms, method: str, url: str, body: anydict, APISECRET: str) -> str:
@@ -102,7 +102,7 @@ def processLocalBook(ws: "Bitvavo.websocket", message: anydict) -> None:
 
 
 class receiveThread(Thread):
-    def __init__(self, ws: WebSocketApp, wsObject: "Bitvavo.websocket"):  # type: ignore
+    def __init__(self, ws: WebSocketApp, wsObject: "Bitvavo.websocket"):
         self.ws = ws
         self.wsObject = wsObject
         Thread.__init__(self)
@@ -115,7 +115,9 @@ class receiveThread(Thread):
                 self.wsObject.authenticated = False
                 time.sleep(self.wsObject.reconnectTimer)
                 if self.wsObject.bitvavo.debugging:
-                    logger.debug(f"we have just set reconnect to true and have waited for {self.wsObject.reconnectTimer}")
+                    logger.debug(
+                        f"we have just set reconnect to true and have waited for {self.wsObject.reconnectTimer}"
+                    )
                 self.wsObject.reconnectTimer = self.wsObject.reconnectTimer * 2
         except KeyboardInterrupt:
             if self.wsObject.bitvavo.debugging:
@@ -1566,14 +1568,14 @@ class Bitvavo:
             self.keepAlive = False
             self.receiveThread.join()
 
-        def waitForSocket(self, ws: WebSocketApp, message: str, private: bool) -> None:  # type: ignore
+        def waitForSocket(self, ws: WebSocketApp, message: str, private: bool) -> None:
             if (not private and self.open) or (private and self.authenticated and self.open):
                 return
             else:
                 time.sleep(0.1)
                 self.waitForSocket(ws, message, private)
 
-        def doSend(self, ws: WebSocketApp, message: str, private: bool = False) -> None:  # type: ignore
+        def doSend(self, ws: WebSocketApp, message: str, private: bool = False) -> None:
             if private and self.APIKEY == "":
                 logger.error("no-apikey", tip="set the API key to be able to make private API calls")
                 return
@@ -1582,7 +1584,7 @@ class Bitvavo:
             if self.bitvavo.debugging:
                 logger.debug("message-sent", message=message)
 
-        def on_message(self, ws: WebSocketApp, msg: str) -> None:  # type: ignore # noqa: C901 (too-complex)
+        def on_message(self, ws: WebSocketApp, msg: str) -> None: # noqa: C901 (too-complex)
             if self.bitvavo.debugging:
                 logger.debug("message-received", message=msg)
             msg_dict: anydict = json.loads(msg)
@@ -1681,13 +1683,13 @@ class Bitvavo:
                     if "subscriptionTrades" in callbacks:
                         callbacks["subscriptionTrades"][market](msg_dict)
 
-        def on_error(self, ws: WebSocketApp, error: Any):  # type: ignore
+        def on_error(self, ws: WebSocketApp, error: Any):
             if "error" in self.callbacks:
                 self.callbacks["error"](error)
             else:
                 logger.error(error)
 
-        def on_close(self, ws: WebSocketApp):  # type: ignore
+        def on_close(self, ws: WebSocketApp):
             self.receiveThread.stop()
             if self.bitvavo.debugging:
                 logger.debug("websocket-closed")
@@ -1720,7 +1722,7 @@ class Bitvavo:
                 for market in self.callbacks["subscriptionBookUser"]:
                     self.subscriptionBook(market, self.callbacks["subscriptionBookUser"][market])
 
-        def on_open(self, ws: WebSocketApp):  # type: ignore
+        def on_open(self, ws: WebSocketApp):
             now = time_ms() - self.bitvavo.lag
             self.open = True
             self.reconnectTimer = 0.5

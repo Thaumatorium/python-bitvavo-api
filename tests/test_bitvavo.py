@@ -7,7 +7,7 @@ import logging
 from time import sleep
 from typing import Any, Dict, List, Union
 
-from pytest import CaptureFixture, LogCaptureFixture, mark  # type: ignore
+from pytest import CaptureFixture, LogCaptureFixture, mark
 
 from bitvavo_api_upgraded.bitvavo import (
     Bitvavo,
