@@ -2,18 +2,18 @@ import hashlib
 import hmac
 import json
 import time
+from datetime import datetime, timedelta
 from threading import Thread
 from typing import Any, Callable, Dict, List, Union
-from datetime import datetime, timedelta
+
 import websocket as ws_lib  # type: ignore
 from requests import delete, get, post, put  # type: ignore
+from structlog import get_logger  # type: ignore
 from websocket import WebSocketApp  # missing stubs for WebSocketApp
 
 from bitvavo_api_upgraded.helper_funcs import time_ms, time_to_wait
 from bitvavo_api_upgraded.type_aliases import anydict, errordict, intdict, ms, s_f, strdict
-from structlog import get_logger  # type: ignore
 
-debugging: bool = False
 logger = get_logger("bitvavo-api-upgraded")
 
 
@@ -114,10 +114,12 @@ class receiveThread(Thread):
                 self.wsObject.reconnect = True
                 self.wsObject.authenticated = False
                 time.sleep(self.wsObject.reconnectTimer)
-                logger.debug(f"we have just set reconnect to true and have waited for {self.wsObject.reconnectTimer}")
+                if self.wsObject.bitvavo.debugging:
+                    logger.debug(f"we have just set reconnect to true and have waited for {self.wsObject.reconnectTimer}")
                 self.wsObject.reconnectTimer = self.wsObject.reconnectTimer * 2
         except KeyboardInterrupt:
-            logger.debug("keyboard-interrupt")
+            if self.wsObject.bitvavo.debugging:
+                logger.debug("keyboard-interrupt")
 
     def stop(self) -> None:
         self.wsObject.keepAlive = False
@@ -195,10 +197,9 @@ class Bitvavo:
         self.APISECRET = str(_options.get("APISECRET", ""))
         self.rateLimitRemaining: int = 1000
         self.rateLimitResetAt: ms = 0
-        global debugging
         self.lag = 0  # have to set it to 0, as it's ALSO used in calcLag 😅
         self.lag = self.calcLag()
-        debugging = bool(_options.get("DEBUGGING", False))
+        self.debugging = bool(_options.get("DEBUGGING", False))
 
     def calcLag(self) -> ms:
         """
@@ -243,13 +244,14 @@ class Bitvavo:
                 # "Your IP or API key has been banned for not respecting the rate limit. The ban expires at ${expiryInMs}""
                 self.rateLimitResetAt = ms(response["error"].split(" at ")[1].split(".")[0])
                 timeToWait = time_to_wait(self.rateLimitResetAt)
-                logger.debug(
-                    "banned",
-                    info={
-                        "wait_time_seconds": timeToWait + 1,
-                        "until": (datetime.now() + timedelta(seconds=timeToWait + 1)).isoformat(),
-                    },
-                )
+                if self.debugging:
+                    logger.debug(
+                        "banned",
+                        info={
+                            "wait_time_seconds": timeToWait + 1,
+                            "until": (datetime.now() + timedelta(seconds=timeToWait + 1)).isoformat(),
+                        },
+                    )
                 time.sleep(timeToWait + 1)  # plus one second to ENSURE we're able to run again.
         if "Bitvavo-Ratelimit-Remaining" in response:
             self.rateLimitRemaining = int(response["Bitvavo-Ratelimit-Remaining"])
@@ -275,14 +277,15 @@ class Bitvavo:
         List[List[str]]
         ```
         """
-        logger.debug(
-            "api-request",
-            info={
-                "url": url,
-                "with_api_key": bool(self.APIKEY != ""),
-                "public_or_private": "public",
-            },
-        )
+        if self.debugging:
+            logger.debug(
+                "api-request",
+                info={
+                    "url": url,
+                    "with_api_key": bool(self.APIKEY != ""),
+                    "public_or_private": "public",
+                },
+            )
         if self.APIKEY != "":
             now = time_ms() - self.lag
             sig = createSignature(now, "GET", url.replace(self.base, ""), {}, self.APISECRET)
@@ -340,15 +343,16 @@ class Bitvavo:
             "Bitvavo-Access-Timestamp": str(now),
             "Bitvavo-Access-Window": str(self.ACCESSWINDOW),
         }
-        logger.debug(
-            "api-request",
-            info={
-                "url": url,
-                "with_api_key": bool(self.APIKEY != ""),
-                "public_or_private": "private",
-                "method": method,
-            },
-        )
+        if self.debugging:
+            logger.debug(
+                "api-request",
+                info={
+                    "url": url,
+                    "with_api_key": bool(self.APIKEY != ""),
+                    "public_or_private": "private",
+                    "method": method,
+                },
+            )
         if method == "DELETE":
             r = delete(url, headers=headers)
         elif method == "POST":
@@ -1575,10 +1579,12 @@ class Bitvavo:
                 return
             self.waitForSocket(ws, message, private)
             ws.send(message)
-            logger.debug("message-sent", message=message)
+            if self.bitvavo.debugging:
+                logger.debug("message-sent", message=message)
 
         def on_message(self, ws: WebSocketApp, msg: str) -> None:  # type: ignore # noqa: C901 (too-complex)
-            logger.debug("message-received", message=msg)
+            if self.bitvavo.debugging:
+                logger.debug("message-received", message=msg)
             msg_dict: anydict = json.loads(msg)
             callbacks = self.callbacks
 
@@ -1683,7 +1689,8 @@ class Bitvavo:
 
         def on_close(self, ws: WebSocketApp):  # type: ignore
             self.receiveThread.stop()
-            logger.debug("websocket-closed")
+            if self.bitvavo.debugging:
+                logger.debug("websocket-closed")
 
         def checkReconnect(self) -> None:  # noqa: C901 (too-complex)
             if "subscriptionTicker" in self.callbacks:
@@ -1731,7 +1738,8 @@ class Bitvavo:
                     ),
                 )
             if self.reconnect:
-                logger.debug("reconnecting")
+                if self.bitvavo.debugging:
+                    logger.debug("reconnecting")
                 thread = Thread(target=self.checkReconnect)
                 thread.start()
 

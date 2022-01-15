@@ -3,12 +3,12 @@ run `pytest --fixtures` to see what's available within a test_* function
 """
 import logging
 import os
+from typing import Any
 
 from dotenv.main import load_dotenv  # type: ignore
 from pytest import fixture  # type: ignore
 
 from bitvavo_api_upgraded.bitvavo import Bitvavo
-from typing import Any
 
 load_dotenv()  # load variables from `.env` file
 

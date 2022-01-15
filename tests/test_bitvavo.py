@@ -1100,7 +1100,9 @@ class TestWebsocket:
         except TypeError:
             assert False
 
-    def test_markets(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
+    def test_markets(
+        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket
+    ) -> None:
         websocket.markets(options={"market": "BTC-EUR"}, callback=generic_callback)
         self.wait()
 
@@ -1128,7 +1130,9 @@ class TestWebsocket:
         assert stderr == ""
         assert 'generic_callback: {\n  "market": "BTC-EUR",\n  "nonce":' in stdout
 
-    def test_public_trades(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
+    def test_public_trades(
+        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket
+    ) -> None:
         websocket.publicTrades(market="BTC-EUR", options={}, callback=generic_callback)
         self.wait()
 
@@ -1137,7 +1141,9 @@ class TestWebsocket:
         assert stderr == ""
         assert 'generic_callback: [\n  {\n    "id": "' in stdout
 
-    def test_candles(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
+    def test_candles(
+        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket
+    ) -> None:
         websocket.candles(market="BTC-EUR", interval="1h", options={}, callback=generic_callback)
         self.wait()
 
@@ -1146,7 +1152,9 @@ class TestWebsocket:
         assert stderr == ""
         assert "generic_callback: [\n  [\n    " in stdout
 
-    def test_ticker_24h(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
+    def test_ticker_24h(
+        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket
+    ) -> None:
         websocket.ticker24h(options={}, callback=generic_callback)
         self.wait()
 
@@ -1155,7 +1163,9 @@ class TestWebsocket:
         assert stderr == ""
         assert 'generic_callback: [\n  {\n    "market": "1INCH-EUR",\n    "open":' in stdout
 
-    def test_ticker_price(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
+    def test_ticker_price(
+        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket
+    ) -> None:
         websocket.tickerPrice(options={}, callback=generic_callback)
         self.wait()
 
@@ -1164,7 +1174,9 @@ class TestWebsocket:
         assert stderr == ""
         assert 'generic_callback: [\n  {\n    "market": "1INCH-EUR",\n    "price": ' in stdout
 
-    def test_ticker_book(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
+    def test_ticker_book(
+        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket
+    ) -> None:
         websocket.tickerBook(options={}, callback=generic_callback)
         self.wait()
 
@@ -1174,7 +1186,9 @@ class TestWebsocket:
         assert 'generic_callback: [\n  {\n    "market": "1INCH-EUR",\n    "bid": ' in stdout
 
     @mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
-    def test_place_order(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
+    def test_place_order(
+        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket
+    ) -> None:
         websocket.placeOrder(
             market="BTC-EUR",
             side="buy",
@@ -1183,7 +1197,9 @@ class TestWebsocket:
             callback=generic_callback,
         )
 
-    def test_get_order(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
+    def test_get_order(
+        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket
+    ) -> None:
         websocket.getOrder(market="BTC-EUR", orderId="6d0dffa7-07fe-448e-9928-233821e7cdb5", callback=generic_callback)
         self.wait()
 
@@ -1197,7 +1213,9 @@ class TestWebsocket:
         assert stdout == ""
 
     @mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
-    def test_update_order(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
+    def test_update_order(
+        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket
+    ) -> None:
         websocket.updateOrder(
             market="BTC-EUR",
             orderId="6d0dffa7-07fe-448e-9928-233821e7cdb5",
@@ -1206,14 +1224,18 @@ class TestWebsocket:
         )
 
     @mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
-    def test_cancel_order(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
+    def test_cancel_order(
+        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket
+    ) -> None:
         websocket.cancelOrder(
             market="BTC-EUR",
             orderId="6d0dffa7-07fe-448e-9928-233821e7cdb5",
             callback=generic_callback,
         )
 
-    def test_get_orders(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
+    def test_get_orders(
+        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket
+    ) -> None:
         websocket.getOrders(market="BTC-EUR", options={}, callback=generic_callback)
         self.wait()
 
@@ -1223,10 +1245,14 @@ class TestWebsocket:
         assert "generic_callback: []\n" in stdout
 
     @mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
-    def test_cancel_orders(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
+    def test_cancel_orders(
+        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket
+    ) -> None:
         websocket.cancelOrders(options={"market": "BTC-EUR"}, callback=generic_callback)
 
-    def test_orders_open(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
+    def test_orders_open(
+        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket
+    ) -> None:
         websocket.ordersOpen(options={}, callback=generic_callback)
         self.wait()
 
@@ -1244,7 +1270,9 @@ class TestWebsocket:
         assert stderr == ""
         assert "generic_callback: []\n" in stdout
 
-    def test_account(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
+    def test_account(
+        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket
+    ) -> None:
         websocket.account(callback=generic_callback)
         self.wait()
 
@@ -1253,7 +1281,9 @@ class TestWebsocket:
         assert stderr == ""
         assert 'generic_callback: {\n  "fees": {\n    "taker": ' in stdout
 
-    def test_balance(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
+    def test_balance(
+        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket
+    ) -> None:
         websocket.balance(options={}, callback=generic_callback)
         self.wait()
 
@@ -1263,7 +1293,9 @@ class TestWebsocket:
         assert 'generic_callback: [\n  {\n    "symbol": ' in stdout
 
     @mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
-    def test_deposit_assets(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
+    def test_deposit_assets(
+        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket
+    ) -> None:
         websocket.depositAssets("BTC", callback=generic_callback)
 
     @mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
