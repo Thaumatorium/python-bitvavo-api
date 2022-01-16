@@ -4,10 +4,13 @@ Hi, this is *not* the official API, but this one has:
 
 - build-in documentation
 - typing for *all* functions and classes
-- unit tests (I already found three bugs that I fixed, because the original code wasn't tested, at all)
+- unit tests (I already found ~~three~~ ~~four~~ five bugs that I fixed, because the original code wasn't tested, at all)
 - a changelog, so you can track of the changes that I make
 - compatible with Python 3.7 and newer ([3.6 isn't supported as of 2021-12-23](https://endoflife.date/python))
 - a working version of `getRemainingLimit()`
+- will actually wait until the ban has been lifted (in case you get banned)
+- more stable api-calls, due to calculating lag between client and server
+- fancy logging via `structlog`, including external loggers like from the urllib3 and websocket libs!
 
 Version `1.*` is guaranteed compatible\* with the original API.
 
