@@ -5,12 +5,10 @@ import logging
 import os
 from typing import Any
 
-from dotenv.main import load_dotenv
 from pytest import fixture
 
 from bitvavo_api_upgraded.bitvavo import Bitvavo
-
-load_dotenv()  # load variables from `.env` file
+from bitvavo_api_upgraded.settings import BITVAVO
 
 logger = logging.getLogger("conftest")
 
@@ -20,12 +18,12 @@ def bitvavo() -> Bitvavo:
     return Bitvavo(
         {
             # create a file called .env and put the keys there
-            "APIKEY": os.environ["BITVAVO_APIKEY"],
-            "APISECRET": os.environ["BITVAVO_APISECRET"],
-            "RESTURL": "https://api.bitvavo.com/v2",
-            "WSURL": "wss://ws.bitvavo.com/v2/",
-            "ACCESSWINDOW": 10000,
-            "DEBUGGING": False,
+            "APIKEY": BITVAVO.APIKEY,
+            "APISECRET": BITVAVO.APISECRET,
+            "RESTURL": BITVAVO.RESTURL,
+            "WSURL": BITVAVO.WSURL,
+            "ACCESSWINDOW": BITVAVO.ACCESSWINDOW,
+            "DEBUGGING": BITVAVO.DEBUGGING,
         },
     )
 
@@ -38,12 +36,12 @@ def websocket(bitvavo: Bitvavo) -> Bitvavo.websocket:
     bitvavo = Bitvavo(
         {
             # create a file called .env and put the keys there
-            "APIKEY": os.environ["BITVAVO_APIKEY"],
-            "APISECRET": os.environ["BITVAVO_APISECRET"],
-            "RESTURL": "https://api.bitvavo.com/v2",
-            "WSURL": "wss://ws.bitvavo.com/v2/",
-            "ACCESSWINDOW": 10000,
-            "DEBUGGING": False,
+            "APIKEY": BITVAVO.APIKEY,
+            "APISECRET": BITVAVO.APISECRET,
+            "RESTURL": BITVAVO.RESTURL,
+            "WSURL": BITVAVO.WSURL,
+            "ACCESSWINDOW": BITVAVO.ACCESSWINDOW,
+            "DEBUGGING": BITVAVO.DEBUGGING,
         },
     )
 

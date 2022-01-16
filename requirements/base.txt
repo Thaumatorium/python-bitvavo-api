@@ -1,4 +1,4 @@
-python-dotenv==0.*, >=0.19  # for loading a local .env file containing settings
+python-decouple==3.*, >=3.5  # for loading a local .env file containing settings
 python-semantic-release==7.*, >=7.23  # to handle sematic versioning
 requests==2.*, >=2.26  # to make http requests
 rich==11.*, >=11.0  # to make errors and exceptions prettier

@@ -2,11 +2,13 @@
 Some helper functions that should make my life a lot easier
 """
 import logging
+import os
 from logging.config import dictConfig
 from time import time
 
 import structlog
 
+from bitvavo_api_upgraded.settings import BITVAVO_API_UPGRADED
 from bitvavo_api_upgraded.type_aliases import ms, s_f
 
 
@@ -34,7 +36,7 @@ def configure_loggers() -> None:
         logger = logging.getLogger(name)
         loggers[logger.name] = {
             "handlers": ["console"],
-            "level": "DEBUG",
+            "level": BITVAVO_API_UPGRADED.LOG_LEVEL,
             "propagate": True,
         }
 
