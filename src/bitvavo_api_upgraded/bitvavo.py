@@ -1,20 +1,23 @@
 import hashlib
 import hmac
 import json
+import logging
 import time
 from datetime import datetime, timedelta
 from threading import Thread
 from typing import Any, Callable, Dict, List, Union
 
+import structlog
 import websocket as ws_lib
 from requests import delete, get, post, put
-import structlog
 from websocket import WebSocketApp  # missing stubs for WebSocketApp
 
-from bitvavo_api_upgraded.helper_funcs import time_ms, time_to_wait
+from bitvavo_api_upgraded.helper_funcs import configure_loggers, time_ms, time_to_wait
 from bitvavo_api_upgraded.type_aliases import anydict, errordict, intdict, ms, s_f, strdict
 
-logger = structlog.get_logger("bitvavo-api-upgraded")
+configure_loggers()
+
+logger = structlog.stdlib.get_logger("bitvavo-api-upgraded")
 
 
 def createSignature(timestamp: ms, method: str, url: str, body: anydict, APISECRET: str) -> str:
@@ -1584,7 +1587,7 @@ class Bitvavo:
             if self.bitvavo.debugging:
                 logger.debug("message-sent", message=message)
 
-        def on_message(self, ws: WebSocketApp, msg: str) -> None: # noqa: C901 (too-complex)
+        def on_message(self, ws: WebSocketApp, msg: str) -> None:  # noqa: C901 (too-complex)
             if self.bitvavo.debugging:
                 logger.debug("message-received", message=msg)
             msg_dict: anydict = json.loads(msg)
