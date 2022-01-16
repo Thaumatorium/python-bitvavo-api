@@ -15,7 +15,10 @@ Hi, this is *not* the official API, but this one has:
 Version `1.*` is guaranteed compatible\* with the original API.
 
 \*: Except for `Bitvavo.candles`. I had to renamed the `symbol` argument to `market`, because the `candles` call actually excpects a `market`. So that's more of a bugfix.
+
 \*\*: Same goes for `Bitvavo.book`; it had the same problem as `candles`.
+
+\*\*\*: And I removed the `rateLimitThread` class, but that should've been used internally only anyway
 
 ## Links
 
