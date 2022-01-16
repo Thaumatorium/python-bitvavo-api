@@ -1,5 +1,13 @@
 # Changelog
 
+## $UNRELEASED
+
+I ran the unittests this time >_>
+
+### Changed
+
+- fixed bug where `self.debugging` could not be found in `Bitvavo
+
 ## v1.11.0 - 2022-01-16
 
 ### Changed
