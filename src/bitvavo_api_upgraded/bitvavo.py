@@ -202,9 +202,9 @@ class Bitvavo:
         self.APISECRET = str(_options.get("APISECRET", ""))
         self.rateLimitRemaining: int = 1000
         self.rateLimitResetAt: ms = 0
+        self.debugging = bool(_options.get("DEBUGGING", False))
         self.lag = 0  # have to set it to 0, as it's ALSO used in calcLag 😅
         self.lag = self.calcLag()
-        self.debugging = bool(_options.get("DEBUGGING", False))
 
     def calcLag(self) -> ms:
         """
