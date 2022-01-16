@@ -1,5 +1,15 @@
 # Changelog
 
+## $UNRELEASED
+
+### Added
+
+- putting `BITVAVO_API_UPGRADED_LOG_LEVEL=DEBUG` into a `.env` file in your client should make this lib spam you with log messages.
+
+### Changed
+
+- replaced `python-dotenv` with `python-decouple` lib. This enables us to set default values for settible settings.
+
 ## v1.11.1 - 2022-01-16
 
 I ran the unittests this time >_>
