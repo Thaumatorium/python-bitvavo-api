@@ -1,7 +1,6 @@
 import hashlib
 import hmac
 import json
-import logging
 import time
 from datetime import datetime, timedelta
 from threading import Thread
