@@ -1,6 +1,6 @@
 # Changelog
 
-## $UNRELEASED
+## v1.11.1 - 2022-01-16
 
 I ran the unittests this time >_>
 
