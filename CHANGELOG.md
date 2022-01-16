@@ -1,6 +1,6 @@
 # Changelog
 
-## $UNRELEASED
+## v1.11.0 - 2022-01-16
 
 ### Changed
 
