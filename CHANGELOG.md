@@ -1,5 +1,11 @@
 # Changelog
 
+## $UNRELEASED
+
+### Removed
+
+- duplicate log messages ;)
+
 ## v1.11.3 - 2022-01-18
 
 ### Changed
