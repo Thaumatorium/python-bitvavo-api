@@ -1,17 +1,13 @@
 from decouple import Choices, config
-
+import logging
 
 class _BitvavoApiUpgraded:
     # default LOG_LEVEL is WARNING, so users don't get their ass spammed.
     LOG_LEVEL: str = config(
-        "BITVAVO_API_UPGRADED_LOG_LEVEL",
-        default="WARNING",
-        cast=Choices(["NOTSET", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
+        "BITVAVO_API_UPGRADED_LOG_LEVEL", default="INFO", cast=Choices(list(logging._nameToLevel.keys()))
     )
-    EXTERNAL_LOG_LEVEL: str = config(
-        "BITVAVO_API_UPGRADED_EXTERNAL_LOG_LEVEL",
-        default="WARNING",
-        cast=Choices(["NOTSET", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
+    LOG_EXTERNAL_LEVEL: str = config(
+        "BITVAVO_API_UPGRADED_EXTERNAL_LOG_LEVEL", default="WARNING", cast=Choices(list(logging._nameToLevel.keys()))
     )
 
 

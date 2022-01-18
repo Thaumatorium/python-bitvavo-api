@@ -33,6 +33,7 @@ def configure_loggers() -> None:
         structlog.processors.add_log_level,  # info, warning, error, etc
         structlog.processors.TimeStamper(fmt="%Y-%m-%dT%H:%M:%S", utc=False),  # add an ISO formatted string
         structlog.processors.StackInfoRenderer(),  # log.info("some-event", stack_info=True)
+        structlog.stdlib.PositionalArgumentsFormatter(),  # for external loggers that use %s
         structlog.processors.format_exc_info,  # log.info("some-event", exc_info=True)
         structlog.processors.UnicodeDecoder(),  # decode any bytes to unicode
     ]
@@ -50,29 +51,24 @@ def configure_loggers() -> None:
             "version": 1,
             "disable_existing_loggers": False,
             "formatters": {
-                "structlog_console": {
+                "console_formatter": {
                     "()": structlog.stdlib.ProcessorFormatter,
                     "processor": structlog.dev.ConsoleRenderer(**console_renderer_kwargs),
                     "foreign_pre_chain": shared_pre_chain,
                 },
             },
             "handlers": {
-                "console": {
+                "console_handler": {
                     "class": "logging.StreamHandler",
                     "level": BITVAVO_API_UPGRADED.LOG_LEVEL,
-                    "formatter": "structlog_console",
+                    "formatter": "console_formatter",
                     "stream": "ext://sys.stderr",
                 },
             },
             "loggers": {
                 "": {
-                    "handlers": ["console"],
-                    "level": BITVAVO_API_UPGRADED.EXTERNAL_LOG_LEVEL,
-                    "propagate": True,
-                },
-                "bitvavo_api_upgraded": {
-                    "handlers": ["console"],
-                    "level": BITVAVO_API_UPGRADED.LOG_LEVEL,
+                    "handlers": ["console_handler"],
+                    "level": BITVAVO_API_UPGRADED.LOG_EXTERNAL_LEVEL,
                     "propagate": True,
                 },
             },
@@ -80,9 +76,12 @@ def configure_loggers() -> None:
     )
 
     structlog.configure(
-        processors=shared_pre_chain,
+        processors=[
+            *shared_pre_chain,
+            structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
+        ],
+        logger_factory=structlog.stdlib.LoggerFactory(),
         wrapper_class=structlog.stdlib.BoundLogger,
         context_class=dict,
-        logger_factory=structlog.stdlib.LoggerFactory(),
         cache_logger_on_first_use=True,
     )
