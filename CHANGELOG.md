@@ -1,6 +1,6 @@
 # Changelog
 
-## $UNRELEASED
+## v1.11.4 - 2022-01-19
 
 ### Removed
 
