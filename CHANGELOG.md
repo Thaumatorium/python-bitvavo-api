@@ -1,5 +1,11 @@
 # Changelog
 
+## $UNRELEASED
+
+### Changed
+
+- The logger should now be fixed; I wanted all subloggers to get integrated into the struclog style instead of putting out some standard text.
+
 ## v1.11.2 - 2022-01-16
 
 ### Added
