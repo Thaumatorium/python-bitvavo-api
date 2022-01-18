@@ -1,8 +1,6 @@
 """
 Some helper functions that should make my life a lot easier
 """
-import logging
-import os
 from logging.config import dictConfig
 from time import time
 
@@ -20,7 +18,7 @@ def time_to_wait(rateLimitResetAt: ms) -> s_f:
     curr_time = time_ms()
     if curr_time > rateLimitResetAt:
         # rateLimitRemaining has already reset
-        return 0
+        return 0.0
     else:
         return abs(s_f((rateLimitResetAt - curr_time) / 1000))
 
@@ -29,18 +27,7 @@ def configure_loggers() -> None:
     """
     source: https://docs.python.org/3.9/library/logging.config.html#dictionary-schema-details
     """
-
-    # overwrite settings for existing loggers from other libs (urllib3 and websocket being big ones!)
-    loggers = {}
-    for name in logging.root.manager.loggerDict:
-        logger = logging.getLogger(name)
-        loggers[logger.name] = {
-            "handlers": ["console"],
-            "level": BITVAVO_API_UPGRADED.LOG_LEVEL,
-            "propagate": True,
-        }
-
-    structlog_console_pre_chain = [
+    shared_pre_chain = [
         structlog.threadlocal.merge_threadlocal,
         structlog.stdlib.add_logger_name,  # show which named logger made the message!
         structlog.processors.add_log_level,  # info, warning, error, etc
@@ -66,33 +53,36 @@ def configure_loggers() -> None:
                 "structlog_console": {
                     "()": structlog.stdlib.ProcessorFormatter,
                     "processor": structlog.dev.ConsoleRenderer(**console_renderer_kwargs),
-                    "foreign_pre_chain": structlog_console_pre_chain,
+                    "foreign_pre_chain": shared_pre_chain,
                 },
             },
             "handlers": {
                 "console": {
                     "class": "logging.StreamHandler",
-                    "level": "DEBUG",
+                    "level": BITVAVO_API_UPGRADED.LOG_LEVEL,
                     "formatter": "structlog_console",
                     "stream": "ext://sys.stderr",
                 },
             },
-            "loggers": loggers,
+            "loggers": {
+                "": {
+                    "handlers": ["console"],
+                    "level": BITVAVO_API_UPGRADED.EXTERNAL_LOG_LEVEL,
+                    "propagate": True,
+                },
+                "bitvavo_api_upgraded": {
+                    "handlers": ["console"],
+                    "level": BITVAVO_API_UPGRADED.LOG_LEVEL,
+                    "propagate": True,
+                },
+            },
         }
     )
 
-    if structlog.is_configured():
-        # only run structlog.configure() once
-        return
-
-    # {'event': 'yitten', 'logger': 'bitvavo-api-upgraded', 'level': 'warning', 'timestamp': '2022-01-16T00:05:26.110710Z'}
     structlog.configure(
-        processors=[
-            *structlog_console_pre_chain,
-            structlog.dev.ConsoleRenderer(**console_renderer_kwargs),
-            structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
-        ],
-        logger_factory=structlog.stdlib.LoggerFactory(),
+        processors=shared_pre_chain,
         wrapper_class=structlog.stdlib.BoundLogger,
+        context_class=dict,
+        logger_factory=structlog.stdlib.LoggerFactory(),
         cache_logger_on_first_use=True,
     )

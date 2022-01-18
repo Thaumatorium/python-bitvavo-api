@@ -1,10 +1,15 @@
 from decouple import Choices, config
 
 
-class _Lib:
+class _BitvavoApiUpgraded:
     # default LOG_LEVEL is WARNING, so users don't get their ass spammed.
     LOG_LEVEL: str = config(
         "BITVAVO_API_UPGRADED_LOG_LEVEL",
+        default="WARNING",
+        cast=Choices(["NOTSET", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
+    )
+    EXTERNAL_LOG_LEVEL: str = config(
+        "BITVAVO_API_UPGRADED_EXTERNAL_LOG_LEVEL",
         default="WARNING",
         cast=Choices(["NOTSET", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
     )
@@ -25,6 +30,7 @@ class _Bitvavo:
     RESTURL: str = "https://api.bitvavo.com/v2"
     WSURL: str = "wss://ws.bitvavo.com/v2/"
 
+
 # Just import these variables to use the settings :)
-BITVAVO_API_UPGRADED = _Lib()
+BITVAVO_API_UPGRADED = _BitvavoApiUpgraded()
 BITVAVO = _Bitvavo()

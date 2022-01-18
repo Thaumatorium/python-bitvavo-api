@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from threading import Thread
 from typing import Any, Callable, Dict, List, Union
 
-import structlog
+from structlog.stdlib import get_logger
 import websocket as ws_lib
 from requests import delete, get, post, put
 from websocket import WebSocketApp  # missing stubs for WebSocketApp
@@ -16,7 +16,7 @@ from bitvavo_api_upgraded.type_aliases import anydict, errordict, intdict, ms, s
 
 configure_loggers()
 
-logger = structlog.stdlib.get_logger("bitvavo-api-upgraded")
+logger = get_logger(__name__)
 
 
 def createSignature(timestamp: ms, method: str, url: str, body: anydict, APISECRET: str) -> str:
@@ -192,6 +192,24 @@ def error_callback_example(msg: errordict) -> None:
 
 
 class Bitvavo:
+    """
+    Example code to get your started:
+
+    ```python
+    bitvavo = Bitvavo(
+        {
+            "APIKEY": "$YOUR_API_KEY",
+            "APISECRET": "$YOUR_API_SECRET,
+            "RESTURL": "https://api.bitvavo.com/v2",
+            "WSURL": "wss://ws.bitvavo.com/v2/",
+            "ACCESSWINDOW": 10000,
+            "DEBUGGING": True,
+        },
+    )
+    time_dict = bitvavo.time()
+    ```
+    """
+
     def __init__(self, options: Dict[str, Union[str, int]] = {}):
         _options = {k.upper(): v for k, v in options.items()}
         self.base: str = str(_options.get("RESTURL", "https://api.bitvavo.com/v2"))
