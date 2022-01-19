@@ -1,6 +1,6 @@
 # Changelog
 
-## $UNRELEASED
+## v1.11.5 - 2022-01-19
 
 A `.env` file is just a text file with "equal-separated" key-value pairs. No spaces around the `=` symbol!
 
