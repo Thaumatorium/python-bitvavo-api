@@ -1,5 +1,15 @@
 # Changelog
 
+## $UNRELEASED
+
+A `.env` file is just a text file with "equal-separated" key-value pairs. No spaces around the `=` symbol!
+
+### Added
+
+- `calcLag()` to `Bitvavo`, which returns the time difference between the server's clock and your local clock. Set the variable 1 line down to the value that comes out of this function :)
+- `BITVAVO_API_UPGRADED_LAG=50` option for your `.env` file, to reduce the amount of `304 "Request was not received within acceptable window"` errors I was getting. Default value of this setting is 50 (milliseconds), but it is better if you override it :)
+- One or two patch-versions back I added `BITVAVO_API_UPGRADED_EXTERNAL_LOG_LEVEL` as an option, but forgot to mention it 😅. This setting covers all loggers that are used by this lib's dependencies (`requests`, which makes use of `urllib3`, and `websocket-client` to be a bit more specific). Use this setting to shut them up, by setting the variable to `WARNING` or `CRITICAL` 😁
+
 ## v1.11.4 - 2022-01-19
 
 ### Removed

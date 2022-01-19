@@ -12,6 +12,7 @@ from requests import delete, get, post, put
 from websocket import WebSocketApp  # missing stubs for WebSocketApp
 
 from bitvavo_api_upgraded.helper_funcs import configure_loggers, time_ms, time_to_wait
+from bitvavo_api_upgraded.settings import BITVAVO_API_UPGRADED
 from bitvavo_api_upgraded.type_aliases import anydict, errordict, intdict, ms, s_f, strdict
 
 configure_loggers()
@@ -220,15 +221,20 @@ class Bitvavo:
         self.rateLimitRemaining: int = 1000
         self.rateLimitResetAt: ms = 0
         self.debugging = bool(_options.get("DEBUGGING", False))
-        self.lag = 0  # have to set it to 0, as it's ALSO used in calcLag 😅
-        self.lag = self.calcLag()
 
     def calcLag(self) -> ms:
         """
-        Calculate the time difference between the client and server; use this value when you make an api call,
-        to precent 304 errors
+        Calculate the time difference between the client and server; use this value with BITVAVO_API_UPGRADED_LAG,
+        when you make an api call, to precent 304 errors.
+
+        Raises KeyError if time() returns an error dict.
         """
         lag_list = [
+            self.time()["time"] - time_ms(),
+            self.time()["time"] - time_ms(),
+            self.time()["time"] - time_ms(),
+            self.time()["time"] - time_ms(),
+            self.time()["time"] - time_ms(),
             self.time()["time"] - time_ms(),
             self.time()["time"] - time_ms(),
             self.time()["time"] - time_ms(),
@@ -309,7 +315,7 @@ class Bitvavo:
                 },
             )
         if self.APIKEY != "":
-            now = time_ms() - self.lag
+            now = time_ms() - BITVAVO_API_UPGRADED.LAG
             sig = createSignature(now, "GET", url.replace(self.base, ""), {}, self.APISECRET)
             headers = {
                 "Bitvavo-Access-Key": self.APIKEY,
@@ -356,7 +362,7 @@ class Bitvavo:
         ```
         """
         # if this method breaks: add `= {}` after `body:Dict``
-        now = time_ms() - self.lag
+        now = time_ms() - BITVAVO_API_UPGRADED.LAG
         sig = createSignature(now, method, (endpoint + postfix), body, self.APISECRET)
         url = self.base + endpoint + postfix
         headers = {
@@ -1743,7 +1749,7 @@ class Bitvavo:
                     self.subscriptionBook(market, self.callbacks["subscriptionBookUser"][market])
 
         def on_open(self, ws: WebSocketApp):
-            now = time_ms() - self.bitvavo.lag
+            now = time_ms() - BITVAVO_API_UPGRADED.LAG
             self.open = True
             self.reconnectTimer = 0.5
             if self.APIKEY != "":

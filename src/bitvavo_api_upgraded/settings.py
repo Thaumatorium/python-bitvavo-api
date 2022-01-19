@@ -1,5 +1,7 @@
 from decouple import Choices, config
+from bitvavo_api_upgraded.type_aliases import ms
 import logging
+
 
 class _BitvavoApiUpgraded:
     # default LOG_LEVEL is WARNING, so users don't get their ass spammed.
@@ -9,6 +11,7 @@ class _BitvavoApiUpgraded:
     LOG_EXTERNAL_LEVEL: str = config(
         "BITVAVO_API_UPGRADED_EXTERNAL_LOG_LEVEL", default="WARNING", cast=Choices(list(logging._nameToLevel.keys()))
     )
+    LAG: ms = config("BITVAVO_API_UPGRADED_LAG", default=ms(50), cast=ms)
 
 
 class _Bitvavo:
