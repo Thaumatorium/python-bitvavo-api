@@ -11,9 +11,20 @@ import websocket as ws_lib
 from requests import delete, get, post, put
 from websocket import WebSocketApp  # missing stubs for WebSocketApp
 
-from bitvavo_api_upgraded.helper_funcs import configure_loggers, time_ms, time_to_wait
+from bitvavo_api_upgraded.helper_funcs import (
+    configure_loggers,
+    time_ms,
+    time_to_wait,
+)
 from bitvavo_api_upgraded.settings import BITVAVO_API_UPGRADED
-from bitvavo_api_upgraded.type_aliases import anydict, errordict, intdict, ms, s_f, strdict
+from bitvavo_api_upgraded.type_aliases import (
+    anydict,
+    errordict,
+    intdict,
+    ms,
+    s_f,
+    strdict,
+)
 
 configure_loggers()
 
@@ -33,7 +44,7 @@ def createPostfix(options: anydict) -> str:
 
     ---
     Args:
-        options (bvdict): [description]
+        options (anydict): [description]
 
     ---
     Returns:
@@ -220,6 +231,7 @@ class Bitvavo:
         self.APISECRET = str(_options.get("APISECRET", ""))
         self.rateLimitRemaining: int = 1000
         self.rateLimitResetAt: ms = 0
+        # TODO(NostraDavid) for v2: remove this functionality - logger.debug is a level that can be set
         self.debugging = bool(_options.get("DEBUGGING", False))
 
     def calcLag(self) -> ms:
@@ -286,7 +298,9 @@ class Bitvavo:
         if "Bitvavo-Ratelimit-ResetAt" in response:
             self.rateLimitResetAt = int(response["Bitvavo-Ratelimit-ResetAt"])
 
-    def publicRequest(self, url: str) -> Union[List[anydict], List[List[str]], intdict, strdict, anydict, errordict]:
+    def publicRequest(
+        self, url: str, rateLimitingWeight: int = 1
+    ) -> Union[List[anydict], List[List[str]], intdict, strdict, anydict, errordict]:
         """Execute a request to the public part of the API; no API key and/or SECRET necessary.
         Will return the reponse as one of three types.
 
@@ -305,6 +319,11 @@ class Bitvavo:
         List[List[str]]
         ```
         """
+        if (self.rateLimitRemaining - rateLimitingWeight) <= 0:
+            napTime = time_to_wait(self.rateLimitResetAt)
+            logger.warning("rate-limit-reached", rateLimitRemaining=self.rateLimitRemaining)
+            logger.info("napping-until-reset", napTime=napTime)
+            time.sleep(napTime)
         if self.debugging:
             logger.debug(
                 "api-request",
@@ -338,7 +357,8 @@ class Bitvavo:
         postfix: str,
         body: anydict,
         method: str = "GET",
-    ) -> Union[List[anydict], List[List[str]], intdict, strdict, anydict, Any, errordict]:
+        rateLimitingWeight: int = 1,
+    ) -> Union[List[anydict], List[List[str]], intdict, strdict, anydict, Any, errordict,]:
         """Execute a request to the private  part of the API. API key and SECRET are required.
         Will return the reponse as one of three types.
 
@@ -346,9 +366,9 @@ class Bitvavo:
         Args:
         # TODO(NostraDavid) fill these in
         ```python
-        endpoint: str = "/order", "", body, )
-        postfix: str = ""
-        body: bvdict = body
+        endpoint: str = "/order"
+        postfix: str = ""  # ?key=value&key2=another_value&...
+        body: anydict = {"market" = "BTC-EUR", "side": "buy", "orderType": "limit"}  # for example
         method: Optional[str] = "POST"  # Defaults to "GET"
         ```
 
@@ -361,6 +381,11 @@ class Bitvavo:
         List[List[str]]
         ```
         """
+        if (self.rateLimitRemaining - rateLimitingWeight) <= 0:
+            napTime = time_to_wait(self.rateLimitResetAt)
+            logger.info("rate-limit-reached", rateLimitRemaining=self.rateLimitRemaining)
+            logger.info("napping-until-reset", napTime=napTime)
+            time.sleep(napTime)
         # if this method breaks: add `= {}` after `body:Dict``
         now = time_ms() - BITVAVO_API_UPGRADED.LAG
         sig = createSignature(now, method, (endpoint + postfix), body, self.APISECRET)
@@ -608,7 +633,7 @@ class Bitvavo:
         ```
         """
         postfix = createPostfix(options)
-        return self.publicRequest(f"{self.base}/{market}/trades{postfix}")
+        return self.publicRequest(f"{self.base}/{market}/trades{postfix}", 5)
 
     def candles(
         self,
@@ -816,8 +841,11 @@ class Bitvavo:
         ]
         ```
         """
+        rateLimitingWeight = 25
+        if "market" in options:
+            rateLimitingWeight = 1
         postfix = createPostfix(options)
-        return self.publicRequest(f"{self.base}/ticker/24h{postfix}")
+        return self.publicRequest(f"{self.base}/ticker/24h{postfix}", rateLimitingWeight)
 
     def placeOrder(self, market: str, side: str, orderType: str, body: anydict) -> anydict:
         """Place a new order on the exchange
@@ -1191,7 +1219,7 @@ class Bitvavo:
         """
         options["market"] = market
         postfix = createPostfix(options)
-        return self.privateRequest("/orders", postfix, {}, "GET")
+        return self.privateRequest("/orders", postfix, {}, "GET", 5)
 
     def cancelOrders(self, options: anydict) -> Union[List[strdict], errordict]:
         """Cancel all existing orders for a specific market (or account)
@@ -1286,8 +1314,11 @@ class Bitvavo:
         ]
         ```
         """
+        rateLimitingWeight = 25
+        if "market" in options:
+            rateLimitingWeight = 1
         postfix = createPostfix(options)
-        return self.privateRequest("/ordersOpen", postfix, {}, "GET")
+        return self.privateRequest("/ordersOpen", postfix, {}, "GET", rateLimitingWeight)
 
     def trades(self, market: str, options: anydict) -> Union[List[anydict], errordict]:
         """Get all historic trades from this account
@@ -1333,7 +1364,7 @@ class Bitvavo:
         """
         options["market"] = market
         postfix = createPostfix(options)
-        return self.privateRequest("/trades", postfix, {}, "GET")
+        return self.privateRequest("/trades", postfix, {}, "GET", 5)
 
     def account(self) -> Dict[str, strdict]:
         """Get all fees for this account
@@ -1387,7 +1418,7 @@ class Bitvavo:
         ```
         """
         postfix = createPostfix(options)
-        return self.privateRequest("/balance", postfix, {}, "GET")
+        return self.privateRequest("/balance", postfix, {}, "GET", 5)
 
     def depositAssets(self, symbol: str) -> strdict:
         """Get the deposit address (with paymentId for some assets) or bank account information to increase your balance
@@ -1473,7 +1504,7 @@ class Bitvavo:
         ```
         """
         postfix = createPostfix(options)
-        return self.privateRequest("/depositHistory", postfix, {}, "GET")
+        return self.privateRequest("/depositHistory", postfix, {}, "GET", 5)
 
     def withdrawAssets(self, symbol: str, amount: str, address: str, body: anydict) -> anydict:
         """Withdraw a coin/token to an external crypto address or bank account.
@@ -1550,7 +1581,7 @@ class Bitvavo:
         ```
         """
         postfix = createPostfix(options)
-        return self.privateRequest("/withdrawalHistory", postfix, {}, "GET")
+        return self.privateRequest("/withdrawalHistory", postfix, {}, "GET", 5)
 
     def newWebsocket(self) -> "Bitvavo.websocket":
         return Bitvavo.websocket(self.APIKEY, self.APISECRET, self.ACCESSWINDOW, self.wsUrl, self)
@@ -1602,6 +1633,7 @@ class Bitvavo:
                 self.waitForSocket(ws, message, private)
 
         def doSend(self, ws: WebSocketApp, message: str, private: bool = False) -> None:
+            # TODO(NostraDavid) add nap-time to the websocket, or do it here; I don't know yet.
             if private and self.APIKEY == "":
                 logger.error("no-apikey", tip="set the API key to be able to make private API calls")
                 return
