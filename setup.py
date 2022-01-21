@@ -4,7 +4,7 @@ from setuptools import find_packages, setup
 
 HERE = Path.cwd()
 
-__version__ = "1.11.5"
+__version__ = "1.12.0"
 
 with (HERE / "requirements" / "base.txt").open(mode="r") as requirements_file:
     requirements = requirements_file.read().splitlines()
