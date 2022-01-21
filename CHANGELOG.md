@@ -1,5 +1,11 @@
 # Changelog
 
+## $UNRELEASED
+
+### Added
+
+- A trigger to nap `Bitvavo` when `rateLimitRemaining` is about run empty, until `rateLimitResetAt` has elapsed and `rateLimitRemaining` has reset, after which the API call will continue as normal. ONLY WORKS FOR NORMAL CALLS - WEBSOCKET NOT (yet?) SUPPORTED!
+
 ## v1.11.5 - 2022-01-19
 
 A `.env` file is just a text file with "equal-separated" key-value pairs. No spaces around the `=` symbol!
