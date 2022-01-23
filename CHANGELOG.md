@@ -1,5 +1,11 @@
 # Changelog
 
+## $UNRELEASED
+
+### Changed
+
+- fixed the API timeout (which did nothing, client-side), by adding a timeout to the actual API call. If `ACCESSWINDOW` is now set (when creating `Bitvavo`)  to `2000` ms, it will time-out after `2000` ms, and not wait the full `30_000` ms anyway.
+
 ## v1.12.0 - 2022-01-21
 
 ### Added
@@ -40,11 +46,11 @@ A `.env` file is just a text file with "equal-separated" key-value pairs. No spa
 
 ## v1.11.1 - 2022-01-16
 
-I ran the unittests this time >_>
+I ran the unittests this time >\_>
 
 ### Changed
 
-- fixed bug where `self.debugging` could not be found in `Bitvavo
+- fixed bug where `self.debugging` could not be found in `Bitvavo`
 
 ## v1.11.0 - 2022-01-16
 
