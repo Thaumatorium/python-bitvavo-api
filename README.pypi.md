@@ -11,6 +11,7 @@ Hi, this is *not* the official API, but this one has:
 - will actually wait until the ban has been lifted (in case you get banned)
 - more stable api-calls, due to calculating lag between client and server
 - fancy logging via `structlog`, including external loggers like from the urllib3 and websocket libs!
+- a working `ACCESSWINDOW` variable that actually times the api calls out - makes failing Bitvavo API calls fail faster!
 
 Version `1.*` is guaranteed compatible\* with the original API.
 
