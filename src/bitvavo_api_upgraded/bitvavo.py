@@ -6,25 +6,14 @@ from datetime import datetime, timedelta
 from threading import Thread
 from typing import Any, Callable, Dict, List, Union
 
-from structlog.stdlib import get_logger
 import websocket as ws_lib
 from requests import delete, get, post, put
+from structlog.stdlib import get_logger
 from websocket import WebSocketApp  # missing stubs for WebSocketApp
 
-from bitvavo_api_upgraded.helper_funcs import (
-    configure_loggers,
-    time_ms,
-    time_to_wait,
-)
+from bitvavo_api_upgraded.helper_funcs import configure_loggers, time_ms, time_to_wait
 from bitvavo_api_upgraded.settings import BITVAVO_API_UPGRADED
-from bitvavo_api_upgraded.type_aliases import (
-    anydict,
-    errordict,
-    intdict,
-    ms,
-    s_f,
-    strdict,
-)
+from bitvavo_api_upgraded.type_aliases import anydict, errordict, intdict, ms, s_f, strdict
 
 configure_loggers()
 
@@ -130,7 +119,7 @@ class receiveThread(Thread):
                 time.sleep(self.wsObject.reconnectTimer)
                 if self.wsObject.bitvavo.debugging:
                     logger.debug(
-                        f"we have just set reconnect to true and have waited for {self.wsObject.reconnectTimer}"
+                        f"we have just set reconnect to true and have waited for {self.wsObject.reconnectTimer}",
                     )
                 self.wsObject.reconnectTimer = self.wsObject.reconnectTimer * 2
         except KeyboardInterrupt:
@@ -299,7 +288,9 @@ class Bitvavo:
             self.rateLimitResetAt = int(response["Bitvavo-Ratelimit-ResetAt"])
 
     def publicRequest(
-        self, url: str, rateLimitingWeight: int = 1
+        self,
+        url: str,
+        rateLimitingWeight: int = 1,
     ) -> Union[List[anydict], List[List[str]], intdict, strdict, anydict, errordict]:
         """Execute a request to the public part of the API; no API key and/or SECRET necessary.
         Will return the reponse as one of three types.
@@ -342,9 +333,9 @@ class Bitvavo:
                 "Bitvavo-Access-Timestamp": str(now),
                 "Bitvavo-Access-Window": str(self.ACCESSWINDOW),
             }
-            r = get(url, headers=headers)
+            r = get(url, headers=headers, timeout=(self.ACCESSWINDOW / 1000))
         else:
-            r = get(url)
+            r = get(url, timeout=(self.ACCESSWINDOW / 1000))
         if "error" in r.json():
             self.updateRateLimit(r.json())
         else:
@@ -358,7 +349,7 @@ class Bitvavo:
         body: anydict,
         method: str = "GET",
         rateLimitingWeight: int = 1,
-    ) -> Union[List[anydict], List[List[str]], intdict, strdict, anydict, Any, errordict,]:
+    ) -> Union[List[anydict], List[List[str]], intdict, strdict, anydict, Any, errordict]:
         """Execute a request to the private  part of the API. API key and SECRET are required.
         Will return the reponse as one of three types.
 
@@ -407,13 +398,13 @@ class Bitvavo:
                 },
             )
         if method == "DELETE":
-            r = delete(url, headers=headers)
+            r = delete(url, headers=headers, timeout=(self.ACCESSWINDOW / 1000))
         elif method == "POST":
-            r = post(url, headers=headers, json=body)
+            r = post(url, headers=headers, json=body, timeout=(self.ACCESSWINDOW / 1000))
         elif method == "PUT":
-            r = put(url, headers=headers, json=body)
+            r = put(url, headers=headers, json=body, timeout=(self.ACCESSWINDOW / 1000))
         else:  # method == "GET"
-            r = get(url, headers=headers)
+            r = get(url, headers=headers, timeout=(self.ACCESSWINDOW / 1000))
         if "error" in r.json():
             self.updateRateLimit(r.json())
         else:
