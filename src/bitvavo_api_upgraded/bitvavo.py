@@ -273,14 +273,14 @@ class Bitvavo:
                 # "Your IP or API key has been banned for not respecting the rate limit. The ban expires at ${expiryInMs}""
                 self.rateLimitResetAt = ms(response["error"].split(" at ")[1].split(".")[0])
                 timeToWait = time_to_wait(self.rateLimitResetAt)
-                if self.debugging:
-                    logger.debug(
-                        "banned",
-                        info={
-                            "wait_time_seconds": timeToWait + 1,
-                            "until": (datetime.now() + timedelta(seconds=timeToWait + 1)).isoformat(),
-                        },
-                    )
+                logger.warning(
+                    "banned",
+                    info={
+                        "wait_time_seconds": timeToWait + 1,
+                        "until": (datetime.now() + timedelta(seconds=timeToWait + 1)).isoformat(),
+                    },
+                )
+                logger.info("napping-until-ban-lifted")
                 time.sleep(timeToWait + 1)  # plus one second to ENSURE we're able to run again.
         if "Bitvavo-Ratelimit-Remaining" in response:
             self.rateLimitRemaining = int(response["Bitvavo-Ratelimit-Remaining"])
