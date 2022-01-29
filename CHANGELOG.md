@@ -1,5 +1,11 @@
 # Changelog
 
+## $UNRELEASED
+
+### Changed
+
+- You will now be informed that you have been temporary banned, even if you did NOT enable the `DEBUGGING` var during creation of the `Bitvavo` object. Such a stupid design, originally.
+
 ## v1.13.0 - 2022-01-23
 
 ### Changed
