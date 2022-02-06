@@ -1,6 +1,4 @@
-import logging
-
-from bitvavo_api_upgraded.helper_funcs import configure_loggers, time, time_ms, time_to_wait
+from bitvavo_api_upgraded.helper_funcs import time_ms, time_to_wait
 
 
 def test_time_ms_happy_path(mocker):

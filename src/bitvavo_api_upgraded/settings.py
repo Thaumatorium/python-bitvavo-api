@@ -1,6 +1,8 @@
-from decouple import Choices, config
-from bitvavo_api_upgraded.type_aliases import ms
 import logging
+
+from decouple import Choices, config
+
+from bitvavo_api_upgraded.type_aliases import ms
 
 
 class _BitvavoApiUpgraded:

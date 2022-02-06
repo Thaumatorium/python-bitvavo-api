@@ -2,7 +2,6 @@
 run `pytest --fixtures` to see what's available within a test_* function
 """
 import logging
-import os
 from typing import Any
 
 from pytest import fixture

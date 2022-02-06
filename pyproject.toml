@@ -77,6 +77,7 @@ module = [
     "websocket",
     "dotenv.main",
     "pytest",
+    "structlog.stdlib",
 ]
 ignore_missing_imports = true
 
