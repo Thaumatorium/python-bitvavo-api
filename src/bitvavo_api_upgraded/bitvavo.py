@@ -310,7 +310,7 @@ class Bitvavo:
         List[List[str]]
         ```
         """
-        if (self.rateLimitRemaining - rateLimitingWeight) <= 0:
+        if (self.rateLimitRemaining - rateLimitingWeight) <= 25:
             napTime = time_to_wait(self.rateLimitResetAt)
             logger.warning("rate-limit-reached", rateLimitRemaining=self.rateLimitRemaining)
             logger.info("napping-until-reset", napTime=napTime)
