@@ -21,6 +21,19 @@ Version `1.*` is guaranteed compatible\* with the original API.
 
 \*\*\*: And I removed the `rateLimitThread` class, but that should've been used internally only anyway
 
+## Customizable settings
+
+Through the magic of the python-decouple lib, when you use this lib, you can create a `settings.ini` (Windows [example](https://pypi.org/project/python-decouple/#ini-file)) or a `.env` (Linux [example](https://pypi.org/project/python-decouple/#env-file)) and add some handy settings there.
+
+Here is an example list of the settings for this lib:
+
+```ini
+BITVAVO_API_UPGRADED_LOG_LEVEL=INFO  # Set the lib's log level
+BITVAVO_API_UPGRADED_LOG_EXTERNAL_LEVEL=WARNING  # Set the libs that are used by *this* lib's log level
+BITVAVO_API_UPGRADED_LAG=50  # the time difference between the server and your local time (you'll have to calculate this yourself - tip: use the bitvavo.time() functionality in a separate script)
+BITVAVO_API_UPGRADED_RATE_LIMITING_BUFFER=25  # default 25, set to 50 if you get "you have been banned" messages (or even higher, if needed)
+```
+
 ## Links
 
 - [Official API Documentation](https://docs.bitvavo.com/)
