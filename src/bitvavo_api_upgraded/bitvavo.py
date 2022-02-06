@@ -200,7 +200,7 @@ class Bitvavo:
     bitvavo = Bitvavo(
         {
             "APIKEY": "$YOUR_API_KEY",
-            "APISECRET": "$YOUR_API_SECRET,
+            "APISECRET": "$YOUR_API_SECRET",
             "RESTURL": "https://api.bitvavo.com/v2",
             "WSURL": "wss://ws.bitvavo.com/v2/",
             "ACCESSWINDOW": 10000,
@@ -325,7 +325,7 @@ class Bitvavo:
                 },
             )
         if self.APIKEY != "":
-            now = time_ms() - BITVAVO_API_UPGRADED.LAG
+            now = time_ms() + BITVAVO_API_UPGRADED.LAG
             sig = createSignature(now, "GET", url.replace(self.base, ""), {}, self.APISECRET)
             headers = {
                 "Bitvavo-Access-Key": self.APIKEY,
@@ -378,7 +378,7 @@ class Bitvavo:
             logger.info("napping-until-reset", napTime=napTime)
             time.sleep(napTime)
         # if this method breaks: add `= {}` after `body:Dict``
-        now = time_ms() - BITVAVO_API_UPGRADED.LAG
+        now = time_ms() + BITVAVO_API_UPGRADED.LAG
         sig = createSignature(now, method, (endpoint + postfix), body, self.APISECRET)
         url = self.base + endpoint + postfix
         headers = {
@@ -1772,7 +1772,7 @@ class Bitvavo:
                     self.subscriptionBook(market, self.callbacks["subscriptionBookUser"][market])
 
         def on_open(self, ws: WebSocketApp):
-            now = time_ms() - BITVAVO_API_UPGRADED.LAG
+            now = time_ms() + BITVAVO_API_UPGRADED.LAG
             self.open = True
             self.reconnectTimer = 0.5
             if self.APIKEY != "":
