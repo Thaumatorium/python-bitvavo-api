@@ -14,6 +14,7 @@ class _BitvavoApiUpgraded:
         "BITVAVO_API_UPGRADED_EXTERNAL_LOG_LEVEL", default="WARNING", cast=Choices(list(logging._nameToLevel.keys()))
     )
     LAG: ms = config("BITVAVO_API_UPGRADED_LAG", default=ms(50), cast=ms)
+    RATE_LIMITING_BUFFER: int = config("BITVAVO_API_UPGRADED_RATE_LIMITING_BUFFER", default=25, cast=int)
 
 
 class _Bitvavo:
