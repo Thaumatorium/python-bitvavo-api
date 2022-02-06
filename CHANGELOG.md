@@ -1,5 +1,11 @@
 # Changelog
 
+## $UNRELEASED
+
+### Changed
+
+- fixed a bug where I subtracted where I should've added, making 304 errors more likely 😅
+
 ## v1.13.1 - 2022-01-29
 
 ### Changed
