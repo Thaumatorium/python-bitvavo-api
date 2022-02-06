@@ -1,6 +1,6 @@
 # Changelog
 
-## $UNRELEASED
+## v1.14.0 - 2022-02-06
 
 Make `upgraded_bitvavo_api` multi-processing friendly! :D
 
