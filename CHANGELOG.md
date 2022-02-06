@@ -1,5 +1,14 @@
 # Changelog
 
+## $UNRELEASED
+
+Make `upgraded_bitvavo_api` multi-processing friendly! :D
+
+### Added
+
+- add chapted to PyPi to shortly explain how to change settings for this lib.
+- add `BITVAVO_API_UPGRADED_RATE_LIMITING_BUFFER` variable. Default value `25`; Change this to 50 or higher *only* when you keep getting banned, because you're running more than one `Bitvavo` object. If you're only running one `Bitvavo` objects, you're probably fine.
+
 ## v1.13.2 - 2022-02-06
 
 ### Changed
