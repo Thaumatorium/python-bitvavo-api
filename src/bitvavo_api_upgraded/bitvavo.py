@@ -79,7 +79,7 @@ def sortAndInsert(
     return asks_or_bids
 
 
-def processLocalBook(ws: "Bitvavo.websocket", message: anydict) -> None:
+def processLocalBook(ws: "Bitvavo.WebSocketAppFacade", message: anydict) -> None:
     market: str = ""
     if "action" in message:
         if message["action"] == "getBook":
@@ -104,30 +104,30 @@ def processLocalBook(ws: "Bitvavo.websocket", message: anydict) -> None:
         ws.callbacks["subscriptionBookUser"][market](ws.localBook[market])
 
 
-class receiveThread(Thread):
-    def __init__(self, ws: WebSocketApp, wsObject: "Bitvavo.websocket"):
+class ReceiveThread(Thread):
+    def __init__(self, ws: WebSocketApp, ws_facade: "Bitvavo.WebSocketAppFacade"):
         self.ws = ws
-        self.wsObject = wsObject
+        self.ws_facade = ws_facade
         Thread.__init__(self)
 
     def run(self) -> None:
         try:
-            while self.wsObject.keepAlive:
+            while self.ws_facade.keepAlive:
                 self.ws.run_forever()
-                self.wsObject.reconnect = True
-                self.wsObject.authenticated = False
-                time.sleep(self.wsObject.reconnectTimer)
-                if self.wsObject.bitvavo.debugging:
+                self.ws_facade.reconnect = True
+                self.ws_facade.authenticated = False
+                time.sleep(self.ws_facade.reconnectTimer)
+                if self.ws_facade.bitvavo.debugging:
                     logger.debug(
-                        f"we have just set reconnect to true and have waited for {self.wsObject.reconnectTimer}",
+                        f"we have just set reconnect to true and have waited for {self.ws_facade.reconnectTimer}",
                     )
-                self.wsObject.reconnectTimer = self.wsObject.reconnectTimer * 2
+                self.ws_facade.reconnectTimer = self.ws_facade.reconnectTimer * 2
         except KeyboardInterrupt:
-            if self.wsObject.bitvavo.debugging:
+            if self.ws_facade.bitvavo.debugging:
                 logger.debug("keyboard-interrupt")
 
     def stop(self) -> None:
-        self.wsObject.keepAlive = False
+        self.ws_facade.keepAlive = False
 
 
 def callback_example(response: Any) -> None:
@@ -1574,15 +1574,21 @@ class Bitvavo:
         postfix = createPostfix(options)
         return self.privateRequest("/withdrawalHistory", postfix, {}, "GET", 5)
 
-    def newWebsocket(self) -> "Bitvavo.websocket":
-        return Bitvavo.websocket(self.APIKEY, self.APISECRET, self.ACCESSWINDOW, self.wsUrl, self)
+    def newWebsocket(self) -> "Bitvavo.WebSocketAppFacade":
+        return Bitvavo.WebSocketAppFacade(self.APIKEY, self.APISECRET, self.ACCESSWINDOW, self.wsUrl, self)
 
-    class websocket:
+    class WebSocketAppFacade:
+        """
+        I gave this 'websocket' class a better name: WebSocketAppFacade.
+
+        It's a facade for the WebSocketApp class, with its own implementation for the on_* methods
+        """
+
         def __init__(self, APIKEY: str, APISECRET: str, ACCESSWINDOW: int, WSURL: str, bitvavo: "Bitvavo"):
             self.APIKEY = APIKEY
             self.APISECRET = APISECRET
             self.ACCESSWINDOW = ACCESSWINDOW
-            self.wsUrl = WSURL
+            self.WSURL = WSURL
             self.open = False
             self.callbacks: anydict = {}
             self.keepAlive = True
@@ -1594,16 +1600,15 @@ class Bitvavo:
 
         def subscribe(self) -> None:
             ws_lib.enableTrace(False)
-            ws = WebSocketApp(
-                self.wsUrl,
+            self.ws = WebSocketApp(
+                self.WSURL,
                 on_message=self.on_message,
                 on_error=self.on_error,
                 on_close=self.on_close,
                 on_open=self.on_open,
             )
-            self.ws = ws
 
-            self.receiveThread = receiveThread(ws, self)
+            self.receiveThread = ReceiveThread(self.ws, self)
             self.receiveThread.daemon = True
             self.receiveThread.start()
 
@@ -1632,15 +1637,15 @@ class Bitvavo:
             if self.bitvavo.debugging:
                 logger.debug("message-sent", message=message)
 
-        def on_message(ws: WebSocketApp, msg: str) -> None:  # noqa: C901 (too-complex)
-            if ws.bitvavo.debugging:
+        def on_message(self, ws, msg: str) -> None:  # noqa: C901 (too-complex)
+            if self.bitvavo.debugging:
                 logger.debug("message-received", message=msg)
             msg_dict: anydict = json.loads(msg)
-            callbacks = ws.callbacks
+            callbacks = self.callbacks
 
             if "error" in msg_dict:
                 if msg_dict["errorCode"] == 105:
-                    ws.bitvavo.updateRateLimit(msg_dict)
+                    self.bitvavo.updateRateLimit(msg_dict)
                 if "error" in callbacks:
                     callbacks["error"](msg_dict)
                 else:
@@ -1695,13 +1700,13 @@ class Bitvavo:
                     market = msg_dict["response"]["market"]
                     if "book" in callbacks:
                         callbacks["book"](msg_dict["response"])
-                    if ws.keepBookCopy:
+                    if self.keepBookCopy:
                         if market in callbacks["subscriptionBook"]:
-                            callbacks["subscriptionBook"][market](ws, msg_dict)
+                            callbacks["subscriptionBook"][market](self, msg_dict)
 
             elif "event" in msg_dict:
                 if msg_dict["event"] == "authenticate":
-                    ws.authenticated = True
+                    self.authenticated = True
                 elif msg_dict["event"] == "fill":
                     market = msg_dict["market"]
                     callbacks["subscriptionAccount"][market](msg_dict)
@@ -1723,23 +1728,23 @@ class Bitvavo:
                     if "subscriptionBookUpdate" in callbacks:
                         if market in callbacks["subscriptionBookUpdate"]:
                             callbacks["subscriptionBookUpdate"][market](msg_dict)
-                    if ws.keepBookCopy:
+                    if self.keepBookCopy:
                         if market in callbacks["subscriptionBook"]:
-                            callbacks["subscriptionBook"][market](ws, msg_dict)
+                            callbacks["subscriptionBook"][market](self, msg_dict)
                 elif msg_dict["event"] == "trade":
                     market = msg_dict["market"]
                     if "subscriptionTrades" in callbacks:
                         callbacks["subscriptionTrades"][market](msg_dict)
 
-        def on_error(ws: WebSocketApp, error: Any):
-            if "error" in ws.callbacks:
-                ws.callbacks["error"](error)
+        def on_error(self, ws, error: Any) -> None:
+            if "error" in self.callbacks:
+                self.callbacks["error"](error)
             else:
                 logger.error(error)
 
-        def on_close(ws: WebSocketApp):
-            ws.receiveThread.stop()
-            if ws.bitvavo.debugging:
+        def on_close(self, ws) -> None:
+            self.receiveThread.stop()
+            if self.bitvavo.debugging:
                 logger.debug("websocket-closed")
 
         def checkReconnect(self) -> None:  # noqa: C901 (too-complex)
@@ -1770,27 +1775,27 @@ class Bitvavo:
                 for market in self.callbacks["subscriptionBookUser"]:
                     self.subscriptionBook(market, self.callbacks["subscriptionBookUser"][market])
 
-        def on_open(ws: WebSocketApp):
+        def on_open(self, ws) -> None:
             now = time_ms() + BITVAVO_API_UPGRADED.LAG
-            ws.open = True
-            ws.reconnectTimer = 0.5
-            if ws.APIKEY != "":
-                ws.doSend(
-                    ws.ws,
+            self.open = True
+            self.reconnectTimer = 0.5
+            if self.APIKEY != "":
+                self.doSend(
+                    self.ws,
                     json.dumps(
                         {
-                            "window": str(ws.ACCESSWINDOW),
+                            "window": str(self.ACCESSWINDOW),
                             "action": "authenticate",
-                            "key": ws.APIKEY,
-                            "signature": createSignature(now, "GET", "/websocket", {}, ws.APISECRET),
+                            "key": self.APIKEY,
+                            "signature": createSignature(now, "GET", "/websocket", {}, self.APISECRET),
                             "timestamp": now,
                         },
                     ),
                 )
-            if ws.reconnect:
-                if ws.bitvavo.debugging:
+            if self.reconnect:
+                if self.bitvavo.debugging:
                     logger.debug("reconnecting")
-                thread = Thread(target=ws.checkReconnect)
+                thread = Thread(target=self.checkReconnect)
                 thread.start()
 
         def setErrorCallback(self, callback: Callable[[Any], None]) -> None:

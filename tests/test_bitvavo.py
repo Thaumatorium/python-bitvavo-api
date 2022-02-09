@@ -1083,14 +1083,17 @@ class TestWebsocket:
         # If all websocket tests fail, just up this number
         sleep(1)
 
-    def test_set_error_callback(self, websocket: Bitvavo.websocket) -> None:
+    def test_set_error_callback(self, websocket: Bitvavo.WebSocketAppFacade) -> None:
         websocket.setErrorCallback(error_callback_example)
 
         assert "error" in websocket.callbacks
         assert websocket.callbacks["error"] == error_callback_example
 
-    def test_time(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
+    def test_time(
+        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.WebSocketAppFacade
+    ) -> None:
         try:
+            print("error")
             websocket.time(generic_callback)
             self.wait()
             assert caplog.text == ""
@@ -1101,7 +1104,7 @@ class TestWebsocket:
             assert False
 
     def test_markets(
-        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket
+        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.WebSocketAppFacade
     ) -> None:
         websocket.markets(options={"market": "BTC-EUR"}, callback=generic_callback)
         self.wait()
@@ -1111,7 +1114,9 @@ class TestWebsocket:
         assert stderr == ""
         assert 'generic_callback: {\n  "market": "BTC-EUR",\n  "status": "trading"' in stdout
 
-    def test_assets(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
+    def test_assets(
+        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.WebSocketAppFacade
+    ) -> None:
         websocket.assets(options={}, callback=generic_callback)
         self.wait()
 
@@ -1120,7 +1125,9 @@ class TestWebsocket:
         assert stderr == ""
         assert 'generic_callback: [\n  {\n    "symbol": "1INCH",\n    "name": "1inch"' in stdout
 
-    def test_book(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
+    def test_book(
+        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.WebSocketAppFacade
+    ) -> None:
         websocket.book(market="BTC-EUR", options={}, callback=generic_callback)
         self.wait()
         self.wait()  # slower function; needs a bit more time
@@ -1131,7 +1138,7 @@ class TestWebsocket:
         assert 'generic_callback: {\n  "market": "BTC-EUR",\n  "nonce":' in stdout
 
     def test_public_trades(
-        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket
+        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.WebSocketAppFacade
     ) -> None:
         websocket.publicTrades(market="BTC-EUR", options={}, callback=generic_callback)
         self.wait()
@@ -1142,7 +1149,7 @@ class TestWebsocket:
         assert 'generic_callback: [\n  {\n    "id": "' in stdout
 
     def test_candles(
-        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket
+        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.WebSocketAppFacade
     ) -> None:
         websocket.candles(market="BTC-EUR", interval="1h", options={}, callback=generic_callback)
         self.wait()
@@ -1153,7 +1160,7 @@ class TestWebsocket:
         assert "generic_callback: [\n  [\n    " in stdout
 
     def test_ticker_24h(
-        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket
+        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.WebSocketAppFacade
     ) -> None:
         websocket.ticker24h(options={}, callback=generic_callback)
         self.wait()
@@ -1164,7 +1171,7 @@ class TestWebsocket:
         assert 'generic_callback: [\n  {\n    "market": "1INCH-EUR",\n    "open":' in stdout
 
     def test_ticker_price(
-        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket
+        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.WebSocketAppFacade
     ) -> None:
         websocket.tickerPrice(options={}, callback=generic_callback)
         self.wait()
@@ -1175,7 +1182,7 @@ class TestWebsocket:
         assert 'generic_callback: [\n  {\n    "market": "1INCH-EUR",\n    "price": ' in stdout
 
     def test_ticker_book(
-        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket
+        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.WebSocketAppFacade
     ) -> None:
         websocket.tickerBook(options={}, callback=generic_callback)
         self.wait()
@@ -1187,7 +1194,7 @@ class TestWebsocket:
 
     @mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
     def test_place_order(
-        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket
+        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.WebSocketAppFacade
     ) -> None:
         websocket.placeOrder(
             market="BTC-EUR",
@@ -1198,7 +1205,7 @@ class TestWebsocket:
         )
 
     def test_get_order(
-        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket
+        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.WebSocketAppFacade
     ) -> None:
         websocket.getOrder(market="BTC-EUR", orderId="6d0dffa7-07fe-448e-9928-233821e7cdb5", callback=generic_callback)
         self.wait()
@@ -1214,7 +1221,7 @@ class TestWebsocket:
 
     @mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
     def test_update_order(
-        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket
+        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.WebSocketAppFacade
     ) -> None:
         websocket.updateOrder(
             market="BTC-EUR",
@@ -1225,7 +1232,7 @@ class TestWebsocket:
 
     @mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
     def test_cancel_order(
-        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket
+        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.WebSocketAppFacade
     ) -> None:
         websocket.cancelOrder(
             market="BTC-EUR",
@@ -1234,7 +1241,7 @@ class TestWebsocket:
         )
 
     def test_get_orders(
-        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket
+        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.WebSocketAppFacade
     ) -> None:
         websocket.getOrders(market="BTC-EUR", options={}, callback=generic_callback)
         self.wait()
@@ -1246,12 +1253,12 @@ class TestWebsocket:
 
     @mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
     def test_cancel_orders(
-        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket
+        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.WebSocketAppFacade
     ) -> None:
         websocket.cancelOrders(options={"market": "BTC-EUR"}, callback=generic_callback)
 
     def test_orders_open(
-        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket
+        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.WebSocketAppFacade
     ) -> None:
         websocket.ordersOpen(options={}, callback=generic_callback)
         self.wait()
@@ -1261,7 +1268,9 @@ class TestWebsocket:
         assert stderr == ""
         assert 'generic_callback: [\n  {\n    "orderId": ' in stdout
 
-    def test_trades(self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket) -> None:
+    def test_trades(
+        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.WebSocketAppFacade
+    ) -> None:
         websocket.trades(market="BTC-EUR", options={}, callback=generic_callback)
         self.wait()
 
@@ -1271,7 +1280,7 @@ class TestWebsocket:
         assert "generic_callback: []\n" in stdout
 
     def test_account(
-        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket
+        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.WebSocketAppFacade
     ) -> None:
         websocket.account(callback=generic_callback)
         self.wait()
@@ -1282,7 +1291,7 @@ class TestWebsocket:
         assert 'generic_callback: {\n  "fees": {\n    "taker": ' in stdout
 
     def test_balance(
-        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket
+        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.WebSocketAppFacade
     ) -> None:
         websocket.balance(options={}, callback=generic_callback)
         self.wait()
@@ -1294,7 +1303,7 @@ class TestWebsocket:
 
     @mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
     def test_deposit_assets(
-        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.websocket
+        self, caplog: LogCaptureFixture, capsys: CaptureFixture[str], websocket: Bitvavo.WebSocketAppFacade
     ) -> None:
         websocket.depositAssets("BTC", callback=generic_callback)
 
@@ -1303,7 +1312,7 @@ class TestWebsocket:
         self,
         caplog: LogCaptureFixture,
         capsys: CaptureFixture[str],
-        websocket: Bitvavo.websocket,
+        websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.withdrawAssets(symbol="BTC", amount="1", address="BitcoinAddress", body={}, callback=generic_callback)
 
@@ -1311,7 +1320,7 @@ class TestWebsocket:
         self,
         caplog: LogCaptureFixture,
         capsys: CaptureFixture[str],
-        websocket: Bitvavo.websocket,
+        websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.depositHistory(options={}, callback=generic_callback)
         self.wait()
@@ -1325,7 +1334,7 @@ class TestWebsocket:
         self,
         caplog: LogCaptureFixture,
         capsys: CaptureFixture[str],
-        websocket: Bitvavo.websocket,
+        websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.withdrawalHistory(options={}, callback=generic_callback)
         self.wait()
@@ -1340,7 +1349,7 @@ class TestWebsocket:
         self,
         caplog: LogCaptureFixture,
         capsys: CaptureFixture[str],
-        websocket: Bitvavo.websocket,
+        websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.subscriptionTicker(market="BTC-EUR", callback=generic_callback)
         self.wait()
@@ -1357,7 +1366,7 @@ class TestWebsocket:
         self,
         caplog: LogCaptureFixture,
         capsys: CaptureFixture[str],
-        websocket: Bitvavo.websocket,
+        websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.subscriptionTicker24h(market="BTC-EUR", callback=generic_callback)
         self.wait()
@@ -1374,7 +1383,7 @@ class TestWebsocket:
         self,
         caplog: LogCaptureFixture,
         capsys: CaptureFixture[str],
-        websocket: Bitvavo.websocket,
+        websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.subscriptionAccount(market="BTC-EUR", callback=generic_callback)
         self.wait()
@@ -1391,7 +1400,7 @@ class TestWebsocket:
         self,
         caplog: LogCaptureFixture,
         capsys: CaptureFixture[str],
-        websocket: Bitvavo.websocket,
+        websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.subscriptionCandles(market="BTC-EUR", interval="1h", callback=generic_callback)
         self.wait()
@@ -1411,7 +1420,7 @@ class TestWebsocket:
         self,
         caplog: LogCaptureFixture,
         capsys: CaptureFixture[str],
-        websocket: Bitvavo.websocket,
+        websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.subscriptionTrades(market="BTC-EUR", callback=generic_callback)
         self.wait()
@@ -1428,7 +1437,7 @@ class TestWebsocket:
         self,
         caplog: LogCaptureFixture,
         capsys: CaptureFixture[str],
-        websocket: Bitvavo.websocket,
+        websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.subscriptionBookUpdate(market="BTC-EUR", callback=generic_callback)
         self.wait()
@@ -1445,7 +1454,7 @@ class TestWebsocket:
         self,
         caplog: LogCaptureFixture,
         capsys: CaptureFixture[str],
-        websocket: Bitvavo.websocket,
+        websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.subscriptionBook(market="BTC-EUR", callback=generic_callback)
         self.wait()

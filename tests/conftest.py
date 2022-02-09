@@ -28,7 +28,7 @@ def bitvavo() -> Bitvavo:
 
 
 @fixture(scope="session")
-def websocket(bitvavo: Bitvavo) -> Bitvavo.websocket:
+def websocket(bitvavo: Bitvavo) -> Bitvavo.WebSocketAppFacade:
     def errorCallback(error: Any) -> None:
         logger.error(f"Error callback: {error}")
 
@@ -44,6 +44,6 @@ def websocket(bitvavo: Bitvavo) -> Bitvavo.websocket:
         },
     )
 
-    websocket: Bitvavo.websocket = bitvavo.newWebsocket()
+    websocket: Bitvavo.WebSocketAppFacade = bitvavo.newWebsocket()
     websocket.setErrorCallback(errorCallback)
     return websocket
