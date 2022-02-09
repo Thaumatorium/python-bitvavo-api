@@ -1599,9 +1599,9 @@ class Bitvavo:
                 on_message=self.on_message,
                 on_error=self.on_error,
                 on_close=self.on_close,
+                on_open=self.on_open,
             )
             self.ws = ws
-            ws.on_open = self.on_open
 
             self.receiveThread = receiveThread(ws, self)
             self.receiveThread.daemon = True
@@ -1617,11 +1617,10 @@ class Bitvavo:
             self.receiveThread.join()
 
         def waitForSocket(self, ws: WebSocketApp, message: str, private: bool) -> None:
-            if (not private and self.open) or (private and self.authenticated and self.open):
-                return
-            else:
+            while True:
+                if (not private and self.open) or (private and self.authenticated and self.open):
+                    return
                 time.sleep(0.1)
-                self.waitForSocket(ws, message, private)
 
         def doSend(self, ws: WebSocketApp, message: str, private: bool = False) -> None:
             # TODO(NostraDavid) add nap-time to the websocket, or do it here; I don't know yet.
@@ -1633,15 +1632,15 @@ class Bitvavo:
             if self.bitvavo.debugging:
                 logger.debug("message-sent", message=message)
 
-        def on_message(self, ws: WebSocketApp, msg: str) -> None:  # noqa: C901 (too-complex)
-            if self.bitvavo.debugging:
+        def on_message(ws: WebSocketApp, msg: str) -> None:  # noqa: C901 (too-complex)
+            if ws.bitvavo.debugging:
                 logger.debug("message-received", message=msg)
             msg_dict: anydict = json.loads(msg)
-            callbacks = self.callbacks
+            callbacks = ws.callbacks
 
             if "error" in msg_dict:
                 if msg_dict["errorCode"] == 105:
-                    self.bitvavo.updateRateLimit(msg_dict)
+                    ws.bitvavo.updateRateLimit(msg_dict)
                 if "error" in callbacks:
                     callbacks["error"](msg_dict)
                 else:
@@ -1696,13 +1695,13 @@ class Bitvavo:
                     market = msg_dict["response"]["market"]
                     if "book" in callbacks:
                         callbacks["book"](msg_dict["response"])
-                    if self.keepBookCopy:
+                    if ws.keepBookCopy:
                         if market in callbacks["subscriptionBook"]:
-                            callbacks["subscriptionBook"][market](self, msg_dict)
+                            callbacks["subscriptionBook"][market](ws, msg_dict)
 
             elif "event" in msg_dict:
                 if msg_dict["event"] == "authenticate":
-                    self.authenticated = True
+                    ws.authenticated = True
                 elif msg_dict["event"] == "fill":
                     market = msg_dict["market"]
                     callbacks["subscriptionAccount"][market](msg_dict)
@@ -1724,23 +1723,23 @@ class Bitvavo:
                     if "subscriptionBookUpdate" in callbacks:
                         if market in callbacks["subscriptionBookUpdate"]:
                             callbacks["subscriptionBookUpdate"][market](msg_dict)
-                    if self.keepBookCopy:
+                    if ws.keepBookCopy:
                         if market in callbacks["subscriptionBook"]:
-                            callbacks["subscriptionBook"][market](self, msg_dict)
+                            callbacks["subscriptionBook"][market](ws, msg_dict)
                 elif msg_dict["event"] == "trade":
                     market = msg_dict["market"]
                     if "subscriptionTrades" in callbacks:
                         callbacks["subscriptionTrades"][market](msg_dict)
 
-        def on_error(self, ws: WebSocketApp, error: Any):
-            if "error" in self.callbacks:
-                self.callbacks["error"](error)
+        def on_error(ws: WebSocketApp, error: Any):
+            if "error" in ws.callbacks:
+                ws.callbacks["error"](error)
             else:
                 logger.error(error)
 
-        def on_close(self, ws: WebSocketApp):
-            self.receiveThread.stop()
-            if self.bitvavo.debugging:
+        def on_close(ws: WebSocketApp):
+            ws.receiveThread.stop()
+            if ws.bitvavo.debugging:
                 logger.debug("websocket-closed")
 
         def checkReconnect(self) -> None:  # noqa: C901 (too-complex)
@@ -1771,27 +1770,27 @@ class Bitvavo:
                 for market in self.callbacks["subscriptionBookUser"]:
                     self.subscriptionBook(market, self.callbacks["subscriptionBookUser"][market])
 
-        def on_open(self, ws: WebSocketApp):
+        def on_open(ws: WebSocketApp):
             now = time_ms() + BITVAVO_API_UPGRADED.LAG
-            self.open = True
-            self.reconnectTimer = 0.5
-            if self.APIKEY != "":
-                self.doSend(
-                    self.ws,
+            ws.open = True
+            ws.reconnectTimer = 0.5
+            if ws.APIKEY != "":
+                ws.doSend(
+                    ws.ws,
                     json.dumps(
                         {
-                            "window": str(self.ACCESSWINDOW),
+                            "window": str(ws.ACCESSWINDOW),
                             "action": "authenticate",
-                            "key": self.APIKEY,
-                            "signature": createSignature(now, "GET", "/websocket", {}, self.APISECRET),
+                            "key": ws.APIKEY,
+                            "signature": createSignature(now, "GET", "/websocket", {}, ws.APISECRET),
                             "timestamp": now,
                         },
                     ),
                 )
-            if self.reconnect:
-                if self.bitvavo.debugging:
+            if ws.reconnect:
+                if ws.bitvavo.debugging:
                     logger.debug("reconnecting")
-                thread = Thread(target=self.checkReconnect)
+                thread = Thread(target=ws.checkReconnect)
                 thread.start()
 
         def setErrorCallback(self, callback: Callable[[Any], None]) -> None:
