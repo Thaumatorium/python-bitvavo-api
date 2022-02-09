@@ -1,5 +1,17 @@
 # Changelog
 
+## $UNRELEASED
+
+### Changed
+
+- fix the callback functions, again
+- internal `Bitvavo.websocket` is now `Bitvavo.WebSocketAppFacade` (which is a better, more descriptive, name)
+- internal `receiveThread` class is now `ReceiveThread`
+
+### Removed
+
+- bug that broke the code, lmao
+
 ## v1.14.1 - 2022-02-09
 
 ### Changed
