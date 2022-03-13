@@ -2,7 +2,7 @@ import hashlib
 import hmac
 import json
 import time
-from datetime import datetime, timedelta
+import datetime as dt
 from threading import Thread
 from typing import Any, Callable, Dict, List, Union
 
@@ -277,7 +277,7 @@ class Bitvavo:
                     "banned",
                     info={
                         "wait_time_seconds": timeToWait + 1,
-                        "until": (datetime.now() + timedelta(seconds=timeToWait + 1)).isoformat(),
+                        "until": (dt.datetime.now() + dt.timedelta(seconds=timeToWait + 1)).isoformat(),
                     },
                 )
                 logger.info("napping-until-ban-lifted")
@@ -313,7 +313,8 @@ class Bitvavo:
         if (self.rateLimitRemaining - rateLimitingWeight) <= BITVAVO_API_UPGRADED.RATE_LIMITING_BUFFER:
             napTime = time_to_wait(self.rateLimitResetAt)
             logger.warning("rate-limit-reached", rateLimitRemaining=self.rateLimitRemaining)
-            logger.info("napping-until-reset", napTime=napTime)
+            logger.info("napping-until-reset", napTime=napTime,
+                        targetDatetime=dt.datetime.fromtimestamp(self.rateLimitResetAt / 1000.0))
             time.sleep(napTime)
         if self.debugging:
             logger.debug(
@@ -374,7 +375,7 @@ class Bitvavo:
         """
         if (self.rateLimitRemaining - rateLimitingWeight) <= BITVAVO_API_UPGRADED.RATE_LIMITING_BUFFER:
             napTime = time_to_wait(self.rateLimitResetAt)
-            logger.info("rate-limit-reached", rateLimitRemaining=self.rateLimitRemaining)
+            logger.warning("rate-limit-reached", rateLimitRemaining=self.rateLimitRemaining)
             logger.info("napping-until-reset", napTime=napTime)
             time.sleep(napTime)
         # if this method breaks: add `= {}` after `body:Dict``
