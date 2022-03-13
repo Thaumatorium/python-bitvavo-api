@@ -372,7 +372,7 @@ class Bitvavo:
         List[List[str]]
         ```
         """
-        if (self.rateLimitRemaining - rateLimitingWeight) <= 0:
+        if (self.rateLimitRemaining - rateLimitingWeight) <= BITVAVO_API_UPGRADED.RATE_LIMITING_BUFFER:
             napTime = time_to_wait(self.rateLimitResetAt)
             logger.info("rate-limit-reached", rateLimitRemaining=self.rateLimitRemaining)
             logger.info("napping-until-reset", napTime=napTime)
