@@ -1,6 +1,6 @@
 # Changelog
 
-## $UNRELEASED
+## v1.15.8 - 2022-03-13
 
 ### Changed
 - also iso format
