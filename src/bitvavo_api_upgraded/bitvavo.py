@@ -409,8 +409,8 @@ class Bitvavo:
         napTime = time_to_wait(self.rateLimitResetAt)
         logger.warning("rate-limit-reached", rateLimitRemaining=self.rateLimitRemaining)
         logger.info("napping-until-reset", napTime=napTime,
-                        targetDatetime=dt.datetime.fromtimestamp(self.rateLimitResetAt / 1000.0).isoformat())
-        time.sleep(napTime)
+                    targetDatetime=dt.datetime.fromtimestamp(self.rateLimitResetAt / 1000.0).isoformat())
+        time.sleep(napTime + 1)  # +1 to add a tiny bit of buffer time
 
     def time(self) -> intdict:
         """Get server-time, in milliseconds, since 1970-01-01
