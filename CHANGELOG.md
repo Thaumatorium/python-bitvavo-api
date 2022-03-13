@@ -1,6 +1,6 @@
 # Changelog
 
-## $UNRELEASED
+## v1.15.5 - 2022-03-13
 
 ### Changed
 - format targetDatetime
