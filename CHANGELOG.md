@@ -1,5 +1,10 @@
 # Changelog
 
+## $UNRELEASED
+
+### Changed
+- add targetDatetime to napping-until-reset info log
+
 ## v1.15.2 - 2022-03-13
 
 ### Changed
