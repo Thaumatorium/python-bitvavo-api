@@ -1,8 +1,13 @@
 import logging
 
-from decouple import Choices, config
+from pathlib import Path
+from decouple import Choices, AutoConfig
 
 from bitvavo_api_upgraded.type_aliases import ms
+
+# don't use/import python-decouple's `config`` variable, because the search_path isn't set,
+# which means applications that use a .env file can't override these variables :(
+config = AutoConfig(search_path=Path.cwd())
 
 
 class _BitvavoApiUpgraded:
