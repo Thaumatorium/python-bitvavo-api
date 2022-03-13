@@ -1,6 +1,6 @@
 # Changelog
 
-## $UNRELEASED
+## v1.15.2 - 2022-03-13
 
 ### Changed
 - fix not being able to override settings variables
