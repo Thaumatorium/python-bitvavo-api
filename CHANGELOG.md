@@ -1,5 +1,10 @@
 # Changelog
 
+## $UNRELEASED
+
+### Changed
+- fix the rateLimit check for private calls (this was a bug that let you get banned when making too many calls)
+
 ## v1.15.0 - 2022-02-09
 
 ### Changed
