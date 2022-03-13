@@ -1,6 +1,6 @@
 # Changelog
 
-## $UNRELEASED
+## v1.15.4 - 2022-03-13
 
 ### Changed
 - same as last one, except also for private calls
