@@ -311,11 +311,7 @@ class Bitvavo:
         ```
         """
         if (self.rateLimitRemaining - rateLimitingWeight) <= BITVAVO_API_UPGRADED.RATE_LIMITING_BUFFER:
-            napTime = time_to_wait(self.rateLimitResetAt)
-            logger.warning("rate-limit-reached", rateLimitRemaining=self.rateLimitRemaining)
-            logger.info("napping-until-reset", napTime=napTime,
-                        targetDatetime=dt.datetime.fromtimestamp(self.rateLimitResetAt / 1000.0))
-            time.sleep(napTime)
+            self.sleep_until_can_continue()
         if self.debugging:
             logger.debug(
                 "api-request",
@@ -374,11 +370,7 @@ class Bitvavo:
         ```
         """
         if (self.rateLimitRemaining - rateLimitingWeight) <= BITVAVO_API_UPGRADED.RATE_LIMITING_BUFFER:
-            napTime = time_to_wait(self.rateLimitResetAt)
-            logger.warning("rate-limit-reached", rateLimitRemaining=self.rateLimitRemaining)
-            logger.info("napping-until-reset", napTime=napTime,
-                        targetDatetime=dt.datetime.fromtimestamp(self.rateLimitResetAt / 1000.0))
-            time.sleep(napTime)
+            self.sleep_until_can_continue()
         # if this method breaks: add `= {}` after `body:Dict``
         now = time_ms() + BITVAVO_API_UPGRADED.LAG
         sig = createSignature(now, method, (endpoint + postfix), body, self.APISECRET)
@@ -412,6 +404,13 @@ class Bitvavo:
         else:
             self.updateRateLimit(dict(r.headers))
         return r.json()
+
+    def sleep_until_can_continue(self):
+        napTime = time_to_wait(self.rateLimitResetAt)
+        logger.warning("rate-limit-reached", rateLimitRemaining=self.rateLimitRemaining)
+        logger.info("napping-until-reset", napTime=napTime,
+                        targetDatetime=dt.datetime.fromtimestamp(self.rateLimitResetAt / 1000.0).isoformat())
+        time.sleep(napTime)
 
     def time(self) -> intdict:
         """Get server-time, in milliseconds, since 1970-01-01
