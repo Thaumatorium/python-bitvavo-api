@@ -1,4 +1,10 @@
 # Changelog
+
+## $UNRELEASED
+
+### Changed
+- add currentTime to napping-until-reset log
+
 ## v1.15.6 - 2022-03-13
 
 ### Changed
