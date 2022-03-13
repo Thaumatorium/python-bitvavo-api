@@ -409,7 +409,7 @@ class Bitvavo:
         napTime = time_to_wait(self.rateLimitResetAt)
         logger.warning("rate-limit-reached", rateLimitRemaining=self.rateLimitRemaining)
         logger.info("napping-until-reset", napTime=napTime,
-                    currentTime=dt.datetime.now(),
+                    currentTime=dt.datetime.now().isoformat(),
                     targetDatetime=dt.datetime.fromtimestamp(self.rateLimitResetAt / 1000.0).isoformat())
         time.sleep(napTime + 1)  # +1 to add a tiny bit of buffer time
 
