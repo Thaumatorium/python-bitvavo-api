@@ -1,4 +1,8 @@
 # Changelog
+## $UNRELEASED
+
+### Changed
+- add buffer time to sleep()
 
 ## v1.15.5 - 2022-03-13
 
