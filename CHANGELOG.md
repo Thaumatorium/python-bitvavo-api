@@ -1,5 +1,5 @@
 # Changelog
-## $UNRELEASED
+## v1.15.6 - 2022-03-13
 
 ### Changed
 - add buffer time to sleep()
