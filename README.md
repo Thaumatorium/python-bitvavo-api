@@ -56,9 +56,9 @@ version bump
 
 Commit those changes.
 
-After that, run `bump2version (major|minor|patch)` to automatically replace
-`$UNRELEASED` with the new version number, and also automatically tag and commit
-(with tag) to release a new version via the Github workflow.
+After that, run `bump-my-version bump (major|minor|patch)` to automatically
+replace `$UNRELEASED` with the new version number, and also automatically tag
+and commit (with tag) to release a new version via the Github workflow.
 
 ## py.typed
 

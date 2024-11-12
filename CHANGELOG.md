@@ -23,12 +23,17 @@ code has not changed.
   - Just `uv sync` to setup the `.venv`, and then `uv run tox` to run tox, or `uv run black` to run black, etc.
 - updated dependencies in `pyproject.toml`, and `.pre-commit-config.yaml`
 - because we're dropping Python 3.7 and 3.8 support, we can finally use lowercase `list` and `dict`
-- fixed a bunch of tests (disabled one with errorCode 400)
-- formatting
+- fixed a bunch of tests (disabled one with errorCode 400), due to minor API
+  changes.
+- formatting using `ruff`
+- replace the unmaintained `bump2version` with `bump-my-version`
 
 ### Removed
 
 - support for Python `3.7`, `3.8`; both EOL since last update
+- `check-manifest` (used for `MANIFEST.in`)
+- `rich`, as it would force its use on my users, and that's a no-no, as it's WAY
+  too verbose. >:(
 
 ## v1.15.8 - 2022-03-13
 

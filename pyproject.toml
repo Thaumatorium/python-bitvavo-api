@@ -33,12 +33,10 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "python-decouple==3.*, >=3.5",          # for loading a local .env file containing settings
-    "python-semantic-release==9.*, >=7.23", # to handle sematic versioning
-    "requests==2.*, >=2.26",                # to make http requests
-    "rich==13.*, >=11.0",                   # to make errors and exceptions prettier
-    "structlog==24.*, >=21.5",              # for logging
-    "websocket-client==1.*, >=1.2",         # something something websocket
+    "python-decouple==3.*, >=3.5",  # to handle sematic versioning
+    "requests==2.*, >=2.26",        # to make http requests
+    "structlog==24.*, >=21.5",      # for logging
+    "websocket-client==1.*, >=1.2", # something something websocket
 ]
 
 [project.urls]
@@ -52,25 +50,45 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
-    "bump2version>=1.0.1",       # for version management of the lib
-    "check-manifest>=0.47",      # to check and create the MANIFEST.in file (for the source distribution)
+    "bump-my-version>=0.28.1",   # for version management of the lib
     "mdformat>=0.7.11",          # for formatting markdown (.md) documents
     "mkdocs>=1.2.3",             # for markdown documentation
     "mypy>=1.13",                # amazing linter
     "pre-commit>=2.15.0",        # for running hooks before committing code
+    "pytest-cov>=1",             # vscode has native coverage, but when using pytest, vscode will presume you'll use pytest-cov
     "pytest-integration>=0.2.2", # for @mark additions
     "pytest-mock>=3.6.1",        # for the `mocker` MockerFixture fixture
-    "pytest-cov>=1",             # vscode has native coverage, but when using pytest, vscode will presume you'll use pytest-cov
     "pytest>=6.2.4",             # you can run `pytest` to run the unit tests; will also be run by `tox` :)
+    "ruff>=0.7.3",               # replaces auotflake, black, flake8, isort, pyupgrade
     "tox-uv>=1.16.0",            # to ensure tox can use uv
     "tox>=3.24.4",               # run `tox` to test everything
     "types-requests>=2.26.2",    # typing for mypy
-    "ruff>=0.7.3",               # replaces auotflake, black, flake8, isort, pyupgrade
 ]
 
+[tool.bumpversion]
+current_version = "1.15.8"
+parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
+serialize = ["{major}.{minor}.{patch}"]
+search = "{current_version}"
+replace = "{new_version}"
+regex = false
+ignore_missing_version = false
+ignore_missing_files = false
+tag = true
+sign_tags = false
+tag_name = "v{new_version}"
+tag_message = "[VERSIONBUMP][{now:%Y-%m-%d}]: {current_version} -> {new_version}"
+allow_dirty = false
+commit = true
+message = "[VERSIONBUMP][{now:%Y-%m-%d}]: {current_version} -> {new_version}"
+commit_args = ""
+setup_hooks = []
+pre_commit_hooks = []
+post_commit_hooks = []
 
-[tool.semantic_release]
-version_variable = ["setup.py:__version__"]
+[tool.bump-my-version.file-settings."CHANGELOG.md"]
+search = "$UNRELEASED"
+replace = "v{new_version} - {now:%Y-%m-%d}"
 
 # https://mypy.readthedocs.io/en/stable/config_file.html#confval-exclude
 [tool.mypy]
