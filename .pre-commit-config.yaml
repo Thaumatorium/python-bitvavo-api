@@ -2,12 +2,12 @@
 repos:
   # update the rev versions with a `pre-commit autoupdate`
     - repo: https://github.com/asottile/pyupgrade
-      rev: v2.30.0
+      rev: v3.19.0
       hooks:
           - id: pyupgrade
             args: [--py38-plus]
     - repo: https://github.com/myint/autoflake
-      rev: v1.4
+      rev: v2.3.1
       hooks:
           - id: autoflake
             args:
@@ -17,38 +17,26 @@ repos:
                 - --remove-unused-variables
                 - --recursive
     - repo: https://github.com/asottile/add-trailing-comma
-      rev: v2.2.1
+      rev: v3.1.0
       hooks:
           - id: add-trailing-comma
             args: [--py36-plus]
     - repo: https://github.com/PyCQA/isort
-      rev: 5.10.1
+      rev: 5.13.2
       hooks:
           - id: isort
             exclude: ^notebooks/
     - repo: https://github.com/psf/black
-      rev: 21.12b0
+      rev: 24.10.0
       hooks:
           - id: black
             args: [--safe, --quiet]
-    - repo: https://github.com/pycqa/flake8
-      rev: 4.0.1
-      hooks:
-          - id: flake8
-    - repo: https://github.com/executablebooks/mdformat
-      rev: 0.7.11
-      hooks:
-          - id: mdformat
-        # Optionally add plugins
-            additional_dependencies:
-                - mdformat-gfm
-                - mdformat-black
     - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
-      rev: 0.1.0
+      rev: 0.2.3
       hooks:
           - id: yamlfmt
     - repo: https://github.com/adrienverge/yamllint
-      rev: v1.26.3
+      rev: v1.35.1
       hooks:
           - id: yamllint
             name: yamllint

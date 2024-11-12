@@ -1,7 +1,7 @@
 import logging
-
 from pathlib import Path
-from decouple import Choices, AutoConfig
+
+from decouple import AutoConfig, Choices
 
 from bitvavo_api_upgraded.type_aliases import ms
 
@@ -13,10 +13,14 @@ config = AutoConfig(search_path=Path.cwd())
 class _BitvavoApiUpgraded:
     # default LOG_LEVEL is WARNING, so users don't get their ass spammed.
     LOG_LEVEL: str = config(
-        "BITVAVO_API_UPGRADED_LOG_LEVEL", default="INFO", cast=Choices(list(logging._nameToLevel.keys()))
+        "BITVAVO_API_UPGRADED_LOG_LEVEL",
+        default="INFO",
+        cast=Choices(list(logging._nameToLevel.keys())),
     )
     LOG_EXTERNAL_LEVEL: str = config(
-        "BITVAVO_API_UPGRADED_EXTERNAL_LOG_LEVEL", default="WARNING", cast=Choices(list(logging._nameToLevel.keys()))
+        "BITVAVO_API_UPGRADED_EXTERNAL_LOG_LEVEL",
+        default="WARNING",
+        cast=Choices(list(logging._nameToLevel.keys())),
     )
     LAG: ms = config("BITVAVO_API_UPGRADED_LAG", default=ms(50), cast=ms)
     RATE_LIMITING_BUFFER: int = config("BITVAVO_API_UPGRADED_RATE_LIMITING_BUFFER", default=25, cast=int)

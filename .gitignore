@@ -14,11 +14,10 @@
 !.python-version
 !CHANGELOG.md
 !LICENSE.txt
-!MANIFEST.in
 !pyproject.toml
 !README.md
 !README.pypi.md
-!setup.py
+!uv.lock
 !tox.ini
 
 # re-ignore recursively

@@ -7,9 +7,11 @@
 Works the same as the official API lib, but I have:
 
 - typing for *all* functions and classes
-- unit tests (I already found three bugs that I fixed, because the original code wasn't tested, at all)
+- unit tests (I already found three bugs that I fixed, because the original code
+  wasn't tested, at all)
 - a changelog, so you can track of the changes that I make
-- compatible with Python 3.7 and newer ([3.6 isn't supported as of 2021-12-23](https://endoflife.date/python))
+- compatible with Python 3.7 and newer ([3.6 isn't supported as of
+  2021-12-23](https://endoflife.date/python))
 
 ## Devguide
 
@@ -27,12 +29,14 @@ tox
 I'm using semantic versioning, which means that changes mean this:
 
 1. MAJOR version when you make incompatible API changes,
-1. MINOR version when you add functionality in a backwards compatible manner, and
+1. MINOR version when you add functionality in a backwards compatible manner,
+   and
 1. PATCH version when you make backwards compatible bug fixes.
 
 ### Versioning
 
-Copy the following block to CHANGELOG.md and add all information since last version bump
+Copy the following block to CHANGELOG.md and add all information since last
+version bump
 
 ```markdown
 ## $UNRELEASED
@@ -49,8 +53,16 @@ Copy the following block to CHANGELOG.md and add all information since last vers
 
 Commit those changes.
 
-After that, run `bump2version (major|minor|patch)` to automatically replace `$UNRELEASED` with the new version number,
-and also automatically tag and commit (with tag) to release a new version via the Github workflow.
+After that, run `bump2version (major|minor|patch)` to automatically replace
+`$UNRELEASED` with the new version number,
+and also automatically tag and commit (with tag) to release a new version via
+the Github workflow.
+
+## py.typed
+
+Perhaps a curious file, but it simply exists to let `mypy` know that the code is
+typed: [Don't forget `py.typed` for your typed Python package
+](https://blog.whtsky.me/tech/2021/dont-forget-py.typed-for-your-typed-python-package/)
 
 ## Last note
 
@@ -65,43 +77,102 @@ ______________________________________________________________________
 
 # Python Bitvavo Api
 
-This is the python wrapper for the Bitvavo API. This project can be used to build your own projects which interact with the Bitvavo platform. Every function available on the API can be called through a REST request or over websockets. For info on the specifics of every parameter consult the [Bitvavo API documentation](https://docs.bitvavo.com/)
+This is the python wrapper for the Bitvavo API. This project can be used to
+build your own projects which interact with the Bitvavo platform. Every function
+available on the API can be called through a REST request or over websockets.
+For info on the specifics of every parameter consult the [Bitvavo API
+documentation](https://docs.bitvavo.com/)
 
-- Getting started       [REST](https://github.com/bitvavo/python-bitvavo-api#getting-started) [Websocket](https://github.com/bitvavo/python-bitvavo-api#getting-started-1)
+- Getting started
+  [REST](https://github.com/bitvavo/python-bitvavo-api#getting-started)
+  [Websocket](https://github.com/bitvavo/python-bitvavo-api#getting-started-1)
 - General
-  - Time                [REST](https://github.com/bitvavo/python-bitvavo-api#get-time) [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-time-1)
-  - Markets             [REST](https://github.com/bitvavo/python-bitvavo-api#get-markets) [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-markets-1)
-  - Assets              [REST](https://github.com/bitvavo/python-bitvavo-api#get-assets) [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-assets-1)
+  - Time
+    [REST](https://github.com/bitvavo/python-bitvavo-api#get-time)
+    [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-time-1)
+  - Markets
+    [REST](https://github.com/bitvavo/python-bitvavo-api#get-markets)
+    [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-markets-1)
+  - Assets
+    [REST](https://github.com/bitvavo/python-bitvavo-api#get-assets)
+    [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-assets-1)
 - Market Data
-  - Book                [REST](https://github.com/bitvavo/python-bitvavo-api#get-book-per-market) [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-book-per-market-1)
-  - Public Trades       [REST](https://github.com/bitvavo/python-bitvavo-api#get-trades-per-market) [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-trades-per-market-1)
-  - Candles             [REST](https://github.com/bitvavo/python-bitvavo-api#get-candles-per-market) [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-candles-per-market-1)
-  - Price Ticker        [REST](https://github.com/bitvavo/python-bitvavo-api#get-price-ticker) [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-price-ticker-1)
-  - Book Ticker         [REST](https://github.com/bitvavo/python-bitvavo-api#get-book-ticker) [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-book-ticker-1)
-  - 24 Hour Ticker      [REST](https://github.com/bitvavo/python-bitvavo-api#get-24-hour-ticker) [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-24-hour-ticker-1)
+  - Book
+    [REST](https://github.com/bitvavo/python-bitvavo-api#get-book-per-market)
+    [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-book-per-market-1)
+  - Public Trades
+    [REST](https://github.com/bitvavo/python-bitvavo-api#get-trades-per-market)
+    [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-trades-per-market-1)
+  - Candles
+    [REST](https://github.com/bitvavo/python-bitvavo-api#get-candles-per-market)
+    [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-candles-per-market-1)
+  - Price Ticker
+    [REST](https://github.com/bitvavo/python-bitvavo-api#get-price-ticker)
+    [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-price-ticker-1)
+  - Book Ticker
+    [REST](https://github.com/bitvavo/python-bitvavo-api#get-book-ticker)
+    [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-book-ticker-1)
+  - 24 Hour Ticker
+    [REST](https://github.com/bitvavo/python-bitvavo-api#get-24-hour-ticker)
+    [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-24-hour-ticker-1)
 - Private
-  - Place Order         [REST](https://github.com/bitvavo/python-bitvavo-api#place-order) [Websocket](https://github.com/bitvavo/python-bitvavo-api#place-order-1)
-  - Update Order        [REST](https://github.com/bitvavo/python-bitvavo-api#update-order) [Websocket](https://github.com/bitvavo/python-bitvavo-api#update-order-1)
-  - Get Order           [REST](https://github.com/bitvavo/python-bitvavo-api#get-order) [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-order-1)
-  - Cancel Order        [REST](https://github.com/bitvavo/python-bitvavo-api#cancel-order) [Websocket](https://github.com/bitvavo/python-bitvavo-api#cancel-order-1)
-  - Get Orders          [REST](https://github.com/bitvavo/python-bitvavo-api#get-orders) [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-orders-1)
-  - Cancel Orders       [REST](https://github.com/bitvavo/python-bitvavo-api#cancel-orders) [Websocket](https://github.com/bitvavo/python-bitvavo-api#cancel-orders-1)
-  - Orders Open         [REST](https://github.com/bitvavo/python-bitvavo-api#get-orders-open) [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-orders-open-1)
-  - Trades              [REST](https://github.com/bitvavo/python-bitvavo-api#get-trades) [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-trades-1)
-  - Account             [REST](https://github.com/bitvavo/python-bitvavo-api#get-account) [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-account-1)
-  - Balance             [REST](https://github.com/bitvavo/python-bitvavo-api#get-balance) [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-balance-1)
-  - Deposit Assets     [REST](https://github.com/bitvavo/python-bitvavo-api#deposit-assets) [Websocket](https://github.com/bitvavo/python-bitvavo-api#deposit-assets-1)
-  - Withdraw Assets   [REST](https://github.com/bitvavo/python-bitvavo-api#withdraw-assets) [Websocket](https://github.com/bitvavo/python-bitvavo-api#withdraw-assets-1)
-  - Deposit History     [REST](https://github.com/bitvavo/python-bitvavo-api#get-deposit-history) [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-deposit-history-1)
-  - Withdrawal History  [REST](https://github.com/bitvavo/python-bitvavo-api#get-withdrawal-history) [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-withdrawal-history-1)
+  - Place Order
+    [REST](https://github.com/bitvavo/python-bitvavo-api#place-order)
+    [Websocket](https://github.com/bitvavo/python-bitvavo-api#place-order-1)
+  - Update Order
+    [REST](https://github.com/bitvavo/python-bitvavo-api#update-order)
+    [Websocket](https://github.com/bitvavo/python-bitvavo-api#update-order-1)
+  - Get Order
+    [REST](https://github.com/bitvavo/python-bitvavo-api#get-order)
+    [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-order-1)
+  - Cancel Order
+    [REST](https://github.com/bitvavo/python-bitvavo-api#cancel-order)
+    [Websocket](https://github.com/bitvavo/python-bitvavo-api#cancel-order-1)
+  - Get Orders
+    [REST](https://github.com/bitvavo/python-bitvavo-api#get-orders)
+    [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-orders-1)
+  - Cancel Orders
+    [REST](https://github.com/bitvavo/python-bitvavo-api#cancel-orders)
+    [Websocket](https://github.com/bitvavo/python-bitvavo-api#cancel-orders-1)
+  - Orders Open
+    [REST](https://github.com/bitvavo/python-bitvavo-api#get-orders-open)
+    [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-orders-open-1)
+  - Trades
+    [REST](https://github.com/bitvavo/python-bitvavo-api#get-trades)
+    [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-trades-1)
+  - Account
+    [REST](https://github.com/bitvavo/python-bitvavo-api#get-account)
+    [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-account-1)
+  - Balance
+    [REST](https://github.com/bitvavo/python-bitvavo-api#get-balance)
+    [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-balance-1)
+  - Deposit Assets
+    [REST](https://github.com/bitvavo/python-bitvavo-api#deposit-assets)
+    [Websocket](https://github.com/bitvavo/python-bitvavo-api#deposit-assets-1)
+  - Withdraw Assets
+    [REST](https://github.com/bitvavo/python-bitvavo-api#withdraw-assets)
+    [Websocket](https://github.com/bitvavo/python-bitvavo-api#withdraw-assets-1)
+  - Deposit History
+    [REST](https://github.com/bitvavo/python-bitvavo-api#get-deposit-history)
+    [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-deposit-history-1)
+  - Withdrawal History
+    [REST](https://github.com/bitvavo/python-bitvavo-api#get-withdrawal-history)
+    [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-withdrawal-history-1)
 - [Subscriptions](https://github.com/bitvavo/python-bitvavo-api#subscriptions)
-  - [Ticker Subscription](https://github.com/bitvavo/python-bitvavo-api#ticker-subscription)
-  - [Ticker 24 Hour Subscription](https://github.com/bitvavo/python-bitvavo-api#ticker-24-hour-subscription)
-  - [Account Subscription](https://github.com/bitvavo/python-bitvavo-api#account-subscription)
-  - [Candles Subscription](https://github.com/bitvavo/python-bitvavo-api#candles-subscription)
-  - [Trades Subscription](https://github.com/bitvavo/python-bitvavo-api#trades-subscription)
-  - [Book Subscription](https://github.com/bitvavo/python-bitvavo-api#book-subscription)
-  - [Book subscription with local copy](https://github.com/bitvavo/python-bitvavo-api#book-subscription-with-local-copy)
+  - [Ticker
+    Subscription](https://github.com/bitvavo/python-bitvavo-api#ticker-subscription)
+  - [Ticker 24 Hour
+    Subscription](https://github.com/bitvavo/python-bitvavo-api#ticker-24-hour-subscription)
+  - [Account
+    Subscription](https://github.com/bitvavo/python-bitvavo-api#account-subscription)
+  - [Candles
+    Subscription](https://github.com/bitvavo/python-bitvavo-api#candles-subscription)
+  - [Trades
+    Subscription](https://github.com/bitvavo/python-bitvavo-api#trades-subscription)
+  - [Book
+    Subscription](https://github.com/bitvavo/python-bitvavo-api#book-subscription)
+  - [Book subscription with local
+    copy](https://github.com/bitvavo/python-bitvavo-api#book-subscription-with-local-copy)
 
 ## Installation
 
@@ -111,22 +182,42 @@ pip install python-bitvavo-api
 
 ## Rate Limiting
 
-Bitvavo uses a weight based rate limiting system, with an allowed limit of 1000 per IP or API key each minute. Please inspect each endpoint in the [Bitvavo API documentation](https://docs.bitvavo.com/) to see the weight. Failure to respect the rate limit will result in an IP or API key ban.
-Since the remaining limit is returned in the header on each REST request, the remaining limit is tracked locally and can be requested through:
+Bitvavo uses a weight based rate limiting system, with an allowed limit of 1000
+per IP or API key each minute. Please inspect each endpoint in the [Bitvavo API
+documentation](https://docs.bitvavo.com/) to see the weight. Failure to respect
+the rate limit will result in an IP or API key ban. Since the remaining limit is
+returned in the header on each REST request, the remaining limit is tracked
+locally and can be requested through:
 
 ```
 limit = bitvavo.getRemainingLimit()
 ```
 
-The websocket functions however do not return a remaining limit, therefore the limit is only updated locally once a ban has been issued.
+The websocket functions however do not return a remaining limit, therefore the
+limit is only updated locally once a ban has been issued.
 
 ## REST requests
 
-The general convention used in all functions (both REST and websockets), is that all optional parameters are passed as an dictionary, while required parameters are passed as separate values. Only when [placing orders](https://github.com/bitvavo/python-bitvavo-api#place-order) some of the optional parameters are required, since a limit order requires more information than a market order. The returned responses are all converted to a dictionary as well, such that `response['<key>'] = '<value>'`.
+The general convention used in all functions (both REST and websockets), is that
+all optional parameters are passed as an dictionary, while required parameters
+are passed as separate values. Only when [placing
+orders](https://github.com/bitvavo/python-bitvavo-api#place-order) some of the
+optional parameters are required, since a limit order requires more information
+than a market order. The returned responses are all converted to a dictionary as
+well, such that `response['<key>'] = '<value>'`.
 
 ### Getting started
 
-The API key and secret are required for private calls and optional for public calls. The access window and debugging parameter are optional for all calls. The access window is used to determine whether the request arrived within time, the value is specified in milliseconds. You can use the [time](https://github.com/bitvavo/python-bitvavo-api#get-time) function to synchronize your time to our server time if errors arise. REST url and WS url can be used to set a different endpoint (for testing purposes). Debugging should be set to true when you want to log additional information and full responses. Any parameter can be omitted, private functions will return an error when the api key and secret have not been set.
+The API key and secret are required for private calls and optional for public
+calls. The access window and debugging parameter are optional for all calls. The
+access window is used to determine whether the request arrived within time, the
+value is specified in milliseconds. You can use the
+[time](https://github.com/bitvavo/python-bitvavo-api#get-time) function to
+synchronize your time to our server time if errors arise. REST url and WS url
+can be used to set a different endpoint (for testing purposes). Debugging should
+be set to true when you want to log additional information and full responses.
+Any parameter can be omitted, private functions will return an error when the
+api key and secret have not been set.
 
 ```python
 from bitvavo_api_upgraded.bitvavo import Bitvavo
@@ -539,7 +630,9 @@ print(response)
 
 #### Place order
 
-When placing an order, make sure that the correct optional parameters are set. For a limit order it is required to set both the amount and price. A market order is valid if either amount or amountQuote is set.
+When placing an order, make sure that the correct optional parameters are set.
+For a limit order it is required to set both the amount and price. A market
+order is valid if either amount or amountQuote is set.
 
 ```python
 # optional parameters: limit:(amount, price, postOnly), market:(amount, amountQuote, disableMarketProtection),
@@ -585,7 +678,8 @@ print(response)
 
 #### Update order
 
-When updating an order make sure that at least one of the optional parameters has been set. Otherwise nothing can be updated.
+When updating an order make sure that at least one of the optional parameters
+has been set. Otherwise nothing can be updated.
 
 ```python
 # Optional parameters: limit:(amount, amountRemaining, price, timeInForce, selfTradePrevention, postOnly)
@@ -684,7 +778,8 @@ print(response)
 
 #### Get orders
 
-Returns the same as get order, but can be used to return multiple orders at once.
+Returns the same as get order, but can be used to return multiple orders at
+once.
 
 ```python
 # options: limit, start, end, orderIdFrom, orderIdTo
@@ -773,7 +868,8 @@ print(response)
 
 #### Cancel orders
 
-Cancels all orders in a market. If no market is specified, all orders of an account will be canceled.
+Cancels all orders in a market. If no market is specified, all orders of an
+account will be canceled.
 
 ```python
 # options: market
@@ -1102,11 +1198,21 @@ print(response)
 
 ## Websockets
 
-All requests which can be done through REST requests can also be performed over websockets. Bitvavo also provides six [subscriptions](https://github.com/bitvavo/python-bitvavo-api#subscriptions). If subscribed to these, updates specific for that type/market are pushed immediately.
+All requests which can be done through REST requests can also be performed over
+websockets. Bitvavo also provides six
+[subscriptions](https://github.com/bitvavo/python-bitvavo-api#subscriptions). If
+subscribed to these, updates specific for that type/market are pushed
+immediately.
 
 ### Getting started
 
-The websocket object should be intialised through the `newWebsocket()` function. After which a callback for the errors should be set. After this any desired function can be called. Finally the main thread should be kept alive for as long as you want the socket to stay open. This can be achieved through a simple `while()` loop, where the remaining limit is checked. This is in case a ban has been issued, otherwise the websocket object will keep trying to reconnect, while our servers keep closing the connection.
+The websocket object should be intialised through the `newWebsocket()` function.
+After which a callback for the errors should be set. After this any desired
+function can be called. Finally the main thread should be kept alive for as long
+as you want the socket to stay open. This can be achieved through a simple
+`while()` loop, where the remaining limit is checked. This is in case a ban has
+been issued, otherwise the websocket object will keep trying to reconnect, while
+our servers keep closing the connection.
 
 ```python
 def errorCallback(error):
@@ -1132,7 +1238,10 @@ except KeyboardInterrupt:
     websocket.closeSocket()
 ```
 
-The api key and secret are copied from the bitvavo object. Therefore if you want to use the private portion of the websockets API, you should set both the key and secret as specified in [REST requests](https://github.com/bitvavo/python-bitvavo-api#rest-requests).
+The api key and secret are copied from the bitvavo object. Therefore if you want
+to use the private portion of the websockets API, you should set both the key
+and secret as specified in [REST
+requests](https://github.com/bitvavo/python-bitvavo-api#rest-requests).
 
 ### Public
 
@@ -1519,7 +1628,9 @@ websocket.ticker24h({}, timeCallback)
 
 #### Place order
 
-When placing an order, make sure that the correct optional parameters are set. For a limit order it is required to set both the amount and price. A market order is valid if either amount or amountQuote has been set.
+When placing an order, make sure that the correct optional parameters are set.
+For a limit order it is required to set both the amount and price. A market
+order is valid if either amount or amountQuote has been set.
 
 ```python
 # optional parameters: limit:(amount, price, postOnly), market:(amount, amountQuote, disableMarketProtection),
@@ -1564,7 +1675,8 @@ websocket.placeOrder(
 
 #### Update order
 
-When updating an order make sure that at least one of the optional parameters has been set. Otherwise nothing can be updated.
+When updating an order make sure that at least one of the optional parameters
+has been set. Otherwise nothing can be updated.
 
 ```python
 # Optional parameters: limit:(amount, amountRemaining, price, timeInForce, selfTradePrevention, postOnly)
@@ -1660,7 +1772,8 @@ websocket.cancelOrder("BTC-EUR", "5986db7b-8d6e-4577-8003-22f363fb3626", ownCall
 
 #### Get orders
 
-Returns the same as get order, but can be used to return multiple orders at once.
+Returns the same as get order, but can be used to return multiple orders at
+once.
 
 ```python
 # options: limit, start, end, orderIdFrom, orderIdTo
@@ -1748,7 +1861,8 @@ websocket.getOrders("BTC-EUR", {}, ownCallback)
 
 #### Cancel orders
 
-Cancels all orders in a market. If no market is specified, all orders of an account will be canceled.
+Cancels all orders in a market. If no market is specified, all orders of an
+account will be canceled.
 
 ```python
 # options: market
@@ -2095,7 +2209,8 @@ websocket.subscriptionTicker("BTC-EUR", ownCallback)
 
 #### Ticker 24 hour subscription
 
-Updated ticker24h objects are sent on this channel once per second. A ticker24h object is considered updated if one of the values besides timestamp has changed.
+Updated ticker24h objects are sent on this channel once per second. A ticker24h
+object is considered updated if one of the values besides timestamp has changed.
 
 ```python
 websocket.subscriptionTicker24h("BTC-EUR", ownCallback)
@@ -2125,7 +2240,8 @@ websocket.subscriptionTicker24h("BTC-EUR", ownCallback)
 
 #### Account subscription
 
-Sends an update whenever an event happens which is related to the account. These are ‘order’ events (create, update, cancel) or ‘fill’ events (a trade occurred).
+Sends an update whenever an event happens which is related to the account. These
+are ‘order’ events (create, update, cancel) or ‘fill’ events (a trade occurred).
 
 ```python
 websocket.subscriptionAccount("BTC-EUR", ownCallback)
@@ -2196,7 +2312,8 @@ websocket.subscriptionCandles("BTC-EUR", "1h", ownCallback)
 
 #### Trades subscription
 
-Sends an update whenever a trade has happened on this market. For your own trades, please subscribe to account.
+Sends an update whenever a trade has happened on this market. For your own
+trades, please subscribe to account.
 
 ```python
 websocket.subscriptionTrades("BTC-EUR", ownCallback)
@@ -2221,7 +2338,10 @@ websocket.subscriptionTrades("BTC-EUR", ownCallback)
 
 #### Book subscription
 
-Sends an update whenever the order book for this specific market has changed. A list of tuples (\[price, amount\]) are returned, where amount ‘0’ means that there are no more orders at this price. If you wish to maintain your own copy of the order book, consider using the next function.
+Sends an update whenever the order book for this specific market has changed. A
+list of tuples (\[price, amount\]) are returned, where amount ‘0’ means that
+there are no more orders at this price. If you wish to maintain your own copy of
+the order book, consider using the next function.
 
 ```python
 websocket.subscriptionBookUpdate("BTC-EUR", ownCallback)
@@ -2244,7 +2364,10 @@ websocket.subscriptionBookUpdate("BTC-EUR", ownCallback)
 
 #### Book subscription with local copy
 
-This is a combination of get book per market and the book subscription which maintains a local copy. On every update to the order book, the entire order book is returned to the callback, while the book subscription will only return updates to the book.
+This is a combination of get book per market and the book subscription which
+maintains a local copy. On every update to the order book, the entire order book
+is returned to the callback, while the book subscription will only return
+updates to the book.
 
 ```python
 websocket.subscriptionBook("BTC-EUR", ownCallback)

@@ -2,13 +2,14 @@
 This file contains all type aliases that I use within the lib,
 to clearify the intention or semantics/meaning/unit of a variable
 """
-from typing import Any, Dict
+
+from typing import Any
 
 # type simplification
-anydict = Dict[str, Any]
-strdict = Dict[str, str]
-intdict = Dict[str, int]
-errordict = Dict[str, Any]  # same type as anydict, but the semantics/meaning is different
+anydict = dict[str, Any]
+strdict = dict[str, str]
+intdict = dict[str, int]
+errordict = dict[str, Any]  # same type as anydict, but the semantics/meaning is different
 
 # note: You can also use these for type conversion, so instead of int(some_float / 1000), you can just do ms(some_float / 1000)
 # units

@@ -1,10 +1,13 @@
 """
 Some helper functions that should make my life a lot easier
 """
+
+from collections.abc import Callable
 from logging.config import dictConfig
 from time import time
 
 import structlog
+from structlog.types import EventDict, WrappedLogger
 
 from bitvavo_api_upgraded.settings import BITVAVO_API_UPGRADED
 from bitvavo_api_upgraded.type_aliases import ms, s_f
@@ -27,7 +30,7 @@ def configure_loggers() -> None:
     """
     source: https://docs.python.org/3.9/library/logging.config.html#dictionary-schema-details
     """
-    shared_pre_chain = [
+    shared_pre_chain: list[Callable[[WrappedLogger, str, EventDict], EventDict]] = [
         structlog.threadlocal.merge_threadlocal,
         structlog.stdlib.add_logger_name,  # show which named logger made the message!
         structlog.processors.add_log_level,  # info, warning, error, etc
@@ -72,7 +75,7 @@ def configure_loggers() -> None:
                     "propagate": True,
                 },
             },
-        }
+        },
     )
 
     structlog.configure(

@@ -1,85 +1,215 @@
+# https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
+[project]
+name = "bitvavo-api-upgraded"
+version = "1.15.8"
+description = "A unit-tested fork of the Bitvavo API"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "ISC License" }
+authors = [
+    { name = "Bitvavo BV (original code)" },
+    { name = "NostraDavid", email = "55331731+NostraDavid@users.noreply.github.com" },
+]
+maintainers = [
+    { name = "NostraDavid", email = "55331731+NostraDavid@users.noreply.github.com" },
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Framework :: Pytest",
+    "Framework :: tox",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Financial and Insurance Industry",
+    "License :: OSI Approved :: ISC License (ISCL)",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python",
+    "Typing :: Typed",
+]
+dependencies = [
+    "python-decouple==3.*, >=3.5",          # for loading a local .env file containing settings
+    "python-semantic-release==9.*, >=7.23", # to handle sematic versioning
+    "requests==2.*, >=2.26",                # to make http requests
+    "rich==13.*, >=11.0",                   # to make errors and exceptions prettier
+    "structlog==24.*, >=21.5",              # for logging
+    "websocket-client==1.*, >=1.2",         # something something websocket
+]
+
+[project.urls]
+homepage = "https://github.com/Thaumatorium/bitvavo-api-upgraded"
+repository = "https://github.com/Thaumatorium/bitvavo-api-upgraded"
+changelog = "https://github.com/Thaumatorium/bitvavo-api-upgraded/blob/master/CHANGELOG.md"
+
 [build-system]
-requires = ["setuptools >= 60.1.0", "wheel >= 0.37.1"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "autoflake>=1.4", # auto-remove unused imports (to prevent flake8 from crying about it)
+    "black>=24.0", # opinionated formatter
+    "bump2version>=1.0.1", # for version management of the lib
+    "check-manifest>=0.47", # to check and create the MANIFEST.in file (for the source distribution)
+    "cookiecutter>=1.7.3", # cookiecutter gh:ionelmc/cookiecutter-pylibrary
+    "coverage[toml]>=6.1.1", # for code coverage; I prefer this over pytest-cov (though I need pytest-cov for vscode coverage)
+    "flake8>=3.9.2", # linter for python. I prefer it over pylint due to extensibility
+    "isort>=5.10.0", # sort imports
+    "mdformat>=0.7.11", # for formatting markdown (.md) documents
+    "mkdocs>=1.2.3", # for markdown documentation
+    "mypy>=1.13", # amazing linter
+    "pre-commit>=2.15.0", # for running hooks before committing code
+    "pytest-integration>=0.2.2", # for @mark additions
+    "pytest-mock>=3.6.1", # for the `mocker` MockerFixture fixture
+    "pytest-cov>=1", # vscode has native coverage, but when using pytest, vscode will presume you'll use pytest-cov
+    "pytest>=6.2.4", # you can run `pytest` to run the unit tests; will also be run by `tox` :)
+    "pyupgrade>=2.29.0", # to make sure code conforms to certain minimal version
+    "tox-uv>=1.16.0", # to ensure tox can use uv
+    "tox>=3.24.4", # run `tox` to test everything
+    "types-requests>=2.26.2", # typing for mypy
+    "ruff>=0.7.3",
+]
+
 
 [tool.semantic_release]
 version_variable = ["setup.py:__version__"]
 
-[tool.mypy]
 # https://mypy.readthedocs.io/en/stable/config_file.html#confval-exclude
-# exclude = ""
-namespace_packages = false
+[tool.mypy]
+# created for mypy 1.13
+
+# Import discovery
+mypy_path = ".venv/bin/mypy"
+files = ["^src/**/*.py"]
+# mypy doesn't use .gitignore, so we have to sort of sync folders...
+exclude = [
+    "^build/.*",
+    "^coverage_html_report/.*",
+    "^dist/.*",
+    "^docs/.*",
+    "^notebooks/.*",
+    "^result/.*",
+    "^settings/.*",
+    "^tests/.*",
+]
 explicit_package_bases = false
-ignore_missing_imports = false
-follow_imports = "normal"        # possible values are normal, silent, skip and error
-follow_imports_for_stubs = false
-# python_executable=""
-no_site_packages = true
+ignore_missing_imports = true
+follow_imports = "normal"
+follow_imports_for_stubs = true
+python_executable = ".venv/bin/python"
+no_site_packages = false
 no_silence_site_packages = false
-# Disallow dynamic typing¶
+
+# Platform configuration
+python_version = "3.11"
+platform = "linux"
+
+# Disallow dynamic typing
 disallow_any_unimported = true
 disallow_any_expr = false
 disallow_any_decorated = false
 disallow_any_explicit = false
-disallow_any_generics = false
-disallow_subclassing_any = false
+disallow_any_generics = true
+disallow_subclassing_any = true
+
+# Untyped definitions and calls
 disallow_untyped_calls = true
-# Untyped definitions and calls¶
+# untyped_calls_exclude = []
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
 check_untyped_defs = true
 disallow_untyped_decorators = true
-# None and Optional handling¶
-no_implicit_optional = true
+
+# None and Optional handling
+implicit_optional = false
 strict_optional = true
-# Configuring warnings¶
+
+# Configuring warnings
 warn_redundant_casts = true
 warn_unused_ignores = true
 warn_no_return = true
 warn_return_any = true
 warn_unreachable = true
-# Suppressing errors¶
-show_none_errors = true
+
+# Suppressing errors
 ignore_errors = false
-# Miscellaneous strictness flags¶
+
+# Miscellaneous strictness flags
 allow_untyped_globals = false
 allow_redefinition = false
 local_partial_types = false
+# disable_error_code = []
+# enable_error_code = ["ignore-without-code"]
 implicit_reexport = true
+strict_concatenate = false
 strict_equality = true
 strict = false
-# Configuring error messages¶
+
+# Configuring error messages
 show_error_context = false
-show_column_numbers = false
-show_error_codes = true
+show_column_numbers = true
+show_error_code_links = true
+hide_error_codes = false
 pretty = false
 color_output = true
 error_summary = true
 show_absolute_path = false
-# Incremental mode¶
+force_uppercase_builtins = false
+force_union_syntax = false
+
+# Incremental mode
 incremental = true
 cache_dir = ".mypy_cache"
 sqlite_cache = false
-cache_fine_grained = false
+cache_fine_grained = true
 skip_version_check = false
 skip_cache_mtime_checks = false
-# Advanced options¶
+
+# Advanced options
+plugins = []
 pdb = false
 show_traceback = false
 raise_exceptions = false
+# custom_typing_module = ""
+# custom_typeshed_dir = ""
 warn_incomplete_stub = false
 
-[[tool.mypy.overrides]]
-module = [
-    "setuptools",
-    "structlog",
-    "requests",
-    "websocket",
-    "dotenv.main",
-    "pytest",
-    "structlog.stdlib",
-]
-ignore_missing_imports = true
+# Report generation
+# !!!
+# Generating reports disables incremental mode and can significantly slow down
+# your workflow. It is recommended to enable reporting only for specific runs
+# (e.g. in CI).
+# any_exprs_report = ""
+# cobertura_xml_report = ""
+# html_report = ""
+# linecount_report = ""
+# linecoverage_report = ""
+# lineprecision_report = ""
+# txt_report  = ""
+# xml_report = ""
+
+# Miscellaneous
+# junit_xml = ""
+scripts_are_modules = false
+warn_unused_configs = true
+verbosity = 0
+
+# [[tool.mypy.overrides]]
+# module = [
+#     "setuptools",
+#     "structlog",
+#     "requests",
+#     "websocket",
+#     "dotenv.main",
+#     "pytest",
+#     "structlog.stdlib",
+# ]
+# ignore_missing_imports = true
 
 # PROGRAM SETTINGS
 [tool.coverage.run]
@@ -91,7 +221,10 @@ parallel = true
 relative_files = true
 
 [tool.coverage.paths]
-source = ["src/bitvavo_api_upgraded", ".tox/py3*/lib/python3.*/site-packages/bitvavo_api_upgraded"]
+source = [
+    "src/bitvavo_api_upgraded",
+    ".tox/py3*/lib/python3.*/site-packages/bitvavo_api_upgraded",
+]
 
 [tool.coverage.report]
 # fail_under = 100
@@ -119,3 +252,82 @@ markers = ["no_cover: some pytest-integration default mark that's not known?."]
 python_classes = "Test*"
 python_files = "test_*.py"
 python_functions = "test_*"
+
+# https://docs.astral.sh/ruff/configuration/
+[tool.ruff]
+# By default, Ruff will also skip any files that are omitted via .ignore,
+# .gitignore, .git/info/exclude, and global gitignore files
+respect-gitignore = true
+
+# The default serialization format is "full" [env: RUFF_OUTPUT_FORMAT=]
+# [possible values: concise, full, json, json-lines, junit, grouped, github,
+# gitlab, pylint, rdjson, azure, sarif]
+output-format = "concise"
+
+line-length = 120
+indent-width = 4
+
+# Assume Python 3.9
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "D",      # pydocstyle
+    "S101",   # (assert)
+    "TRY400", # (error-instead-of-exception)
+    "PD901",  # (pandas-df-variable-name
+    "RET504", # (unnecessary-assign) - true, but handy when I need to debug and inspect.
+    "FIX001", # (line-contains-fixme)
+    "FIX002", # (line-contains-todo)
+    "TD003",  # (missing-todo-link) - I'm not linking every time TODO to an issue...
+    "COM812", # (missing-trailing-comma)
+    "ISC001", # (single-line-implicit-string-concatenation)
+    "ANN401", # (any-type)
+]
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = [
+    "T201", # print found; don't fix, but don't ignore either!
+]
+
+# Allow unused variables when underscore-prefixed.
+# dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
+
+# Enable auto-formatting of code examples in docstrings. Markdown,
+# reStructuredText code/literal blocks and doctests are all supported.
+#
+# This is currently disabled by default, but it is planned for this
+# to be opt-out in the future.
+docstring-code-format = false
+
+# Set the line length limit used when formatting code snippets in
+# docstrings.
+#
+# This only has an effect when the `docstring-code-format` setting is
+# enabled.
+docstring-code-line-length = "dynamic"
+
+[tool.ruff.lint.extend-per-file-ignores]
+"tests/**/*.py" = [
+    "S101",    # (suspicious-non-cryptographic-random-usage)
+    "ARG",     # (flake8-unused-arguments)
+    "FBT",     # (flake8-boolean-trap)
+    "PLR2004", # (magic-value-comparison)
+    "S311",    # (suspicious-non-cryptographic-random-usage)
+    "TRY301",  # (raise-within-try)
+]

@@ -1,10 +1,12 @@
+from __future__ import annotations
+
+import datetime as dt
 import hashlib
 import hmac
 import json
 import time
-import datetime as dt
 from threading import Thread
-from typing import Any, Callable, Dict, List, Union
+from typing import Any, Callable
 
 import websocket as ws_lib
 from requests import delete, get, post, put
@@ -53,10 +55,10 @@ def bidsCompare(a: float, b: float) -> bool:
 
 
 def sortAndInsert(
-    asks_or_bids: List[List[str]],
-    update: List[List[str]],
+    asks_or_bids: list[list[str]],
+    update: list[list[str]],
     compareFunc: Callable[[float, float], bool],
-) -> Union[List[List[str]], errordict]:
+) -> list[list[str]] | errordict:
     for updateEntry in update:
         entrySet: bool = False
         for j in range(len(asks_or_bids)):
@@ -79,7 +81,7 @@ def sortAndInsert(
     return asks_or_bids
 
 
-def processLocalBook(ws: "Bitvavo.WebSocketAppFacade", message: anydict) -> None:
+def processLocalBook(ws: Bitvavo.WebSocketAppFacade, message: anydict) -> None:
     market: str = ""
     if "action" in message:
         if message["action"] == "getBook":
@@ -105,7 +107,7 @@ def processLocalBook(ws: "Bitvavo.WebSocketAppFacade", message: anydict) -> None
 
 
 class ReceiveThread(Thread):
-    def __init__(self, ws: WebSocketApp, ws_facade: "Bitvavo.WebSocketAppFacade"):
+    def __init__(self, ws: WebSocketApp, ws_facade: Bitvavo.WebSocketAppFacade):
         self.ws = ws
         self.ws_facade = ws_facade
         Thread.__init__(self)
@@ -136,7 +138,7 @@ def callback_example(response: Any) -> None:
 
     I  made this so you can see what kind of function you'll need to stick into the websocket functions.
     """
-    if isinstance(response, Dict):
+    if isinstance(response, dict):
         # instead of printing, you could save the object to a file:
         import json
         from pathlib import Path
@@ -146,7 +148,7 @@ def callback_example(response: Any) -> None:
         # a = append; figure out yourself to create multiple callback functions, probably one for each type of call that you want to make
         with filepath.open("a") as file:
             file.write(json.dumps(response))
-    elif isinstance(response, List):
+    elif isinstance(response, list):
         # Whether `item` is a list or a dict doesn't matter to print
         for item in response:
             print(item)
@@ -189,7 +191,7 @@ def error_callback_example(msg: errordict) -> None:
     ```
     """
     # easiest thing is to use the logger, but there's a good chance this message gets silently eaten.
-    logger.error(msg)
+    logger.error("error", msg=msg)
 
 
 class Bitvavo:
@@ -211,7 +213,7 @@ class Bitvavo:
     ```
     """
 
-    def __init__(self, options: Dict[str, Union[str, int]] = {}):
+    def __init__(self, options: dict[str, str | int] = {}):
         _options = {k.upper(): v for k, v in options.items()}
         self.base: str = str(_options.get("RESTURL", "https://api.bitvavo.com/v2"))
         self.wsUrl: str = str(_options.get("WSURL", "wss://ws.bitvavo.com/v2/"))
@@ -256,7 +258,7 @@ class Bitvavo:
         """
         return self.rateLimitRemaining
 
-    def updateRateLimit(self, response: Union[anydict, errordict]) -> None:
+    def updateRateLimit(self, response: anydict | errordict) -> None:
         """
         Update the rate limited
 
@@ -291,7 +293,7 @@ class Bitvavo:
         self,
         url: str,
         rateLimitingWeight: int = 1,
-    ) -> Union[List[anydict], List[List[str]], intdict, strdict, anydict, errordict]:
+    ) -> list[anydict] | list[list[str]] | intdict | strdict | anydict | errordict:
         """Execute a request to the public part of the API; no API key and/or SECRET necessary.
         Will return the reponse as one of three types.
 
@@ -305,9 +307,9 @@ class Bitvavo:
         Returns:
         ```python
         # either of one:
-        Dict[str, Any]
-        List[Dict[str, Any]]
-        List[List[str]]
+        dict[str, Any]
+        list[dict[str, Any]]
+        list[list[str]]
         ```
         """
         if (self.rateLimitRemaining - rateLimitingWeight) <= BITVAVO_API_UPGRADED.RATE_LIMITING_BUFFER:
@@ -346,7 +348,7 @@ class Bitvavo:
         body: anydict,
         method: str = "GET",
         rateLimitingWeight: int = 1,
-    ) -> Union[List[anydict], List[List[str]], intdict, strdict, anydict, Any, errordict]:
+    ) -> list[anydict] | list[list[str]] | intdict | strdict | anydict | Any | errordict:
         """Execute a request to the private  part of the API. API key and SECRET are required.
         Will return the reponse as one of three types.
 
@@ -364,14 +366,14 @@ class Bitvavo:
         Returns:
         ```python
         # either of one:
-        Dict[str, Any]
-        List[Dict[str, Any]]
-        List[List[str]]
+        dict[str, Any]
+        list[dict[str, Any]]
+        list[list[str]]
         ```
         """
         if (self.rateLimitRemaining - rateLimitingWeight) <= BITVAVO_API_UPGRADED.RATE_LIMITING_BUFFER:
             self.sleep_until_can_continue()
-        # if this method breaks: add `= {}` after `body:Dict``
+        # if this method breaks: add `= {}` after `body: dict`
         now = time_ms() + BITVAVO_API_UPGRADED.LAG
         sig = createSignature(now, method, (endpoint + postfix), body, self.APISECRET)
         url = self.base + endpoint + postfix
@@ -405,12 +407,15 @@ class Bitvavo:
             self.updateRateLimit(dict(r.headers))
         return r.json()
 
-    def sleep_until_can_continue(self):
+    def sleep_until_can_continue(self) -> None:
         napTime = time_to_wait(self.rateLimitResetAt)
         logger.warning("rate-limit-reached", rateLimitRemaining=self.rateLimitRemaining)
-        logger.info("napping-until-reset", napTime=napTime,
-                    currentTime=dt.datetime.now().isoformat(),
-                    targetDatetime=dt.datetime.fromtimestamp(self.rateLimitResetAt / 1000.0).isoformat())
+        logger.info(
+            "napping-until-reset",
+            napTime=napTime,
+            currentTime=dt.datetime.now().isoformat(),
+            targetDatetime=dt.datetime.fromtimestamp(self.rateLimitResetAt / 1000.0).isoformat(),
+        )
         time.sleep(napTime + 1)  # +1 to add a tiny bit of buffer time
 
     def time(self) -> intdict:
@@ -432,9 +437,9 @@ class Bitvavo:
         {"time": 1539180275424 }
         ```
         """
-        return self.publicRequest(f"{self.base}/time")
+        return self.publicRequest(f"{self.base}/time")  # type: ignore[return-value]
 
-    def markets(self, options: strdict) -> Union[List[anydict], anydict, errordict]:
+    def markets(self, options: strdict) -> list[anydict] | anydict | errordict:
         """Get all available markets with some meta-information, unless options is given a `market` key.
         Then you will get a single market, instead of a list of markets.
 
@@ -484,9 +489,9 @@ class Bitvavo:
         ```
         """
         postfix = createPostfix(options)
-        return self.publicRequest(f"{self.base}/markets{postfix}")
+        return self.publicRequest(f"{self.base}/markets{postfix}")  # type: ignore[return-value]
 
-    def assets(self, options: strdict) -> Union[List[anydict], anydict]:
+    def assets(self, options: strdict) -> list[anydict] | anydict:
         """Get all available assets, unless `options` is given a `symbol` key.
         Then you will get a single asset, instead of a list of assets.
 
@@ -533,9 +538,9 @@ class Bitvavo:
         ```
         """
         postfix = createPostfix(options)
-        return self.publicRequest(f"{self.base}/assets{postfix}")
+        return self.publicRequest(f"{self.base}/assets{postfix}")  # type: ignore[return-value]
 
-    def book(self, market: str, options: intdict) -> Union[Dict[str, Union[str, int, List[str]]], errordict]:
+    def book(self, market: str, options: intdict) -> dict[str, str | int | list[str]] | errordict:
         """Get a book (with two lists: asks and bids, as they're called)
 
         ---
@@ -577,9 +582,9 @@ class Bitvavo:
         ```
         """
         postfix = createPostfix(options)
-        return self.publicRequest(f"{self.base}/{market}/book{postfix}")
+        return self.publicRequest(f"{self.base}/{market}/book{postfix}")  # type: ignore[return-value]
 
-    def publicTrades(self, market: str, options: Dict[str, Union[str, int]]) -> Union[List[anydict], errordict]:
+    def publicTrades(self, market: str, options: dict[str, str | int]) -> list[anydict] | errordict:
         """Publically available trades
 
         ---
@@ -626,14 +631,14 @@ class Bitvavo:
         ```
         """
         postfix = createPostfix(options)
-        return self.publicRequest(f"{self.base}/{market}/trades{postfix}", 5)
+        return self.publicRequest(f"{self.base}/{market}/trades{postfix}", 5)  # type: ignore[return-value]
 
     def candles(
         self,
         market: str,
         interval: str,
-        options: Dict[str, Union[str, int]],
-    ) -> Union[List[List[str]], errordict]:
+        options: dict[str, str | int],
+    ) -> list[list[str]] | errordict:
         """Get up to 1440 candles for a market, with a specific interval (candle size)
 
         Extra reading material: https://en.wikipedia.org/wiki/Candlestick_chart
@@ -681,9 +686,9 @@ class Bitvavo:
         """
         options["interval"] = interval
         postfix = createPostfix(options)
-        return self.publicRequest(f"{self.base}/{market}/candles{postfix}")
+        return self.publicRequest(f"{self.base}/{market}/candles{postfix}")  # type: ignore[return-value]
 
-    def tickerPrice(self, options: strdict) -> Union[List[strdict], strdict]:
+    def tickerPrice(self, options: strdict) -> list[strdict] | strdict:
         """Get the current price for each market
 
         ---
@@ -729,9 +734,9 @@ class Bitvavo:
         ```
         """
         postfix = createPostfix(options)
-        return self.publicRequest(f"{self.base}/ticker/price{postfix}")
+        return self.publicRequest(f"{self.base}/ticker/price{postfix}")  # type: ignore[return-value]
 
-    def tickerBook(self, options: strdict) -> Union[List[strdict], strdict]:
+    def tickerBook(self, options: strdict) -> list[strdict] | strdict:
         """Get current bid/ask, bidsize/asksize per market
 
         ---
@@ -770,9 +775,9 @@ class Bitvavo:
         ```
         """
         postfix = createPostfix(options)
-        return self.publicRequest(f"{self.base}/ticker/book{postfix}")
+        return self.publicRequest(f"{self.base}/ticker/book{postfix}")  # type: ignore[return-value]
 
-    def ticker24h(self, options: strdict) -> Union[List[anydict], anydict, errordict]:
+    def ticker24h(self, options: strdict) -> list[anydict] | anydict | errordict:
         """Get current bid/ask, bidsize/asksize per market
 
         ---
@@ -838,7 +843,7 @@ class Bitvavo:
         if "market" in options:
             rateLimitingWeight = 1
         postfix = createPostfix(options)
-        return self.publicRequest(f"{self.base}/ticker/24h{postfix}", rateLimitingWeight)
+        return self.publicRequest(f"{self.base}/ticker/24h{postfix}", rateLimitingWeight)  # type: ignore[return-value]
 
     def placeOrder(self, market: str, side: str, orderType: str, body: anydict) -> anydict:
         """Place a new order on the exchange
@@ -963,7 +968,7 @@ class Bitvavo:
         body["market"] = market
         body["side"] = side
         body["orderType"] = orderType
-        return self.privateRequest("/order", "", body, "POST")
+        return self.privateRequest("/order", "", body, "POST")  # type: ignore[return-value]
 
     def updateOrder(self, market: str, orderId: str, body: anydict) -> anydict:
         """Update an existing order for a specific market. Make sure that at least one of the optional parameters is set,
@@ -1047,7 +1052,7 @@ class Bitvavo:
         """
         body["market"] = market
         body["orderId"] = orderId
-        return self.privateRequest("/order", "", body, "PUT")
+        return self.privateRequest("/order", "", body, "PUT")  # type: ignore[return-value]
 
     def cancelOrder(self, market: str, orderId: str) -> strdict:
         """Cancel an existing order for a specific market
@@ -1072,9 +1077,9 @@ class Bitvavo:
         ```
         """
         postfix = createPostfix({"market": market, "orderId": orderId})
-        return self.privateRequest("/order", postfix, {}, "DELETE")
+        return self.privateRequest("/order", postfix, {}, "DELETE")  # type: ignore[return-value]
 
-    def getOrder(self, market: str, orderId: str) -> Union[List[anydict], errordict]:
+    def getOrder(self, market: str, orderId: str) -> list[anydict] | errordict:
         """Get an existing order for a specific market
 
         ---
@@ -1137,9 +1142,9 @@ class Bitvavo:
         ```
         """
         postfix = createPostfix({"market": market, "orderId": orderId})
-        return self.privateRequest("/order", postfix, {}, "GET")
+        return self.privateRequest("/order", postfix, {}, "GET")  # type: ignore[return-value]
 
-    def getOrders(self, market: str, options: anydict) -> Union[List[anydict], errordict]:
+    def getOrders(self, market: str, options: anydict) -> list[anydict] | errordict:
         """Get multiple existing orders for a specific market
 
         ---
@@ -1212,9 +1217,9 @@ class Bitvavo:
         """
         options["market"] = market
         postfix = createPostfix(options)
-        return self.privateRequest("/orders", postfix, {}, "GET", 5)
+        return self.privateRequest("/orders", postfix, {}, "GET", 5)  # type: ignore[return-value]
 
-    def cancelOrders(self, options: anydict) -> Union[List[strdict], errordict]:
+    def cancelOrders(self, options: anydict) -> list[strdict] | errordict:
         """Cancel all existing orders for a specific market (or account)
 
         ---
@@ -1240,9 +1245,9 @@ class Bitvavo:
         ```
         """
         postfix = createPostfix(options)
-        return self.privateRequest("/orders", postfix, {}, "DELETE")
+        return self.privateRequest("/orders", postfix, {}, "DELETE")  # type: ignore[return-value]
 
-    def ordersOpen(self, options: anydict) -> Union[List[anydict], errordict]:
+    def ordersOpen(self, options: anydict) -> list[anydict] | errordict:
         """Get all open orders, either for all markets, or a single market
 
         ---
@@ -1311,9 +1316,9 @@ class Bitvavo:
         if "market" in options:
             rateLimitingWeight = 1
         postfix = createPostfix(options)
-        return self.privateRequest("/ordersOpen", postfix, {}, "GET", rateLimitingWeight)
+        return self.privateRequest("/ordersOpen", postfix, {}, "GET", rateLimitingWeight)  # type: ignore[return-value]
 
-    def trades(self, market: str, options: anydict) -> Union[List[anydict], errordict]:
+    def trades(self, market: str, options: anydict) -> list[anydict] | errordict:
         """Get all historic trades from this account
 
         ---
@@ -1357,9 +1362,9 @@ class Bitvavo:
         """
         options["market"] = market
         postfix = createPostfix(options)
-        return self.privateRequest("/trades", postfix, {}, "GET", 5)
+        return self.privateRequest("/trades", postfix, {}, "GET", 5)  # type: ignore[return-value]
 
-    def account(self) -> Dict[str, strdict]:
+    def account(self) -> dict[str, strdict]:
         """Get all fees for this account
 
         ---
@@ -1380,9 +1385,9 @@ class Bitvavo:
         }
         ```
         """
-        return self.privateRequest("/account", "", {}, "GET")
+        return self.privateRequest("/account", "", {}, "GET")  # type: ignore[return-value]
 
-    def balance(self, options: strdict) -> Union[List[strdict], errordict]:
+    def balance(self, options: strdict) -> list[strdict] | errordict:
         """Get the balance for this account
 
         ---
@@ -1411,7 +1416,7 @@ class Bitvavo:
         ```
         """
         postfix = createPostfix(options)
-        return self.privateRequest("/balance", postfix, {}, "GET", 5)
+        return self.privateRequest("/balance", postfix, {}, "GET", 5)  # type: ignore[return-value]
 
     def depositAssets(self, symbol: str) -> strdict:
         """Get the deposit address (with paymentId for some assets) or bank account information to increase your balance
@@ -1446,9 +1451,9 @@ class Bitvavo:
         ```
         """
         postfix = createPostfix({"symbol": symbol})
-        return self.privateRequest("/deposit", postfix, {}, "GET")
+        return self.privateRequest("/deposit", postfix, {}, "GET")  # type: ignore[return-value]
 
-    def depositHistory(self, options: anydict) -> Union[List[anydict], errordict]:
+    def depositHistory(self, options: anydict) -> list[anydict] | errordict:
         """Get the deposit history of the account
 
         Even when you want something from a single `symbol`, you'll still receive a list with multiple deposits.
@@ -1497,7 +1502,7 @@ class Bitvavo:
         ```
         """
         postfix = createPostfix(options)
-        return self.privateRequest("/depositHistory", postfix, {}, "GET", 5)
+        return self.privateRequest("/depositHistory", postfix, {}, "GET", 5)  # type: ignore[return-value]
 
     def withdrawAssets(self, symbol: str, amount: str, address: str, body: anydict) -> anydict:
         """Withdraw a coin/token to an external crypto address or bank account.
@@ -1534,9 +1539,9 @@ class Bitvavo:
         body["symbol"] = symbol
         body["amount"] = amount
         body["address"] = address
-        return self.privateRequest("/withdrawal", "", body, "POST")
+        return self.privateRequest("/withdrawal", "", body, "POST")  # type: ignore[return-value]
 
-    def withdrawalHistory(self, options: anydict) -> Union[List[anydict], anydict]:
+    def withdrawalHistory(self, options: anydict) -> list[anydict] | errordict:
         """Get the withdrawal history
 
         ---
@@ -1574,9 +1579,9 @@ class Bitvavo:
         ```
         """
         postfix = createPostfix(options)
-        return self.privateRequest("/withdrawalHistory", postfix, {}, "GET", 5)
+        return self.privateRequest("/withdrawalHistory", postfix, {}, "GET", 5)  # type: ignore[return-value]
 
-    def newWebsocket(self) -> "Bitvavo.WebSocketAppFacade":
+    def newWebsocket(self) -> Bitvavo.WebSocketAppFacade:
         return Bitvavo.WebSocketAppFacade(self.APIKEY, self.APISECRET, self.ACCESSWINDOW, self.wsUrl, self)
 
     class WebSocketAppFacade:
@@ -1586,7 +1591,14 @@ class Bitvavo:
         It's a facade for the WebSocketApp class, with its own implementation for the on_* methods
         """
 
-        def __init__(self, APIKEY: str, APISECRET: str, ACCESSWINDOW: int, WSURL: str, bitvavo: "Bitvavo"):
+        def __init__(
+            self,
+            APIKEY: str,
+            APISECRET: str,
+            ACCESSWINDOW: int,
+            WSURL: str,
+            bitvavo: Bitvavo,
+        ):
             self.APIKEY = APIKEY
             self.APISECRET = APISECRET
             self.ACCESSWINDOW = ACCESSWINDOW
@@ -1632,14 +1644,17 @@ class Bitvavo:
         def doSend(self, ws: WebSocketApp, message: str, private: bool = False) -> None:
             # TODO(NostraDavid) add nap-time to the websocket, or do it here; I don't know yet.
             if private and self.APIKEY == "":
-                logger.error("no-apikey", tip="set the API key to be able to make private API calls")
+                logger.error(
+                    "no-apikey",
+                    tip="set the API key to be able to make private API calls",
+                )
                 return
             self.waitForSocket(ws, message, private)
             ws.send(message)
             if self.bitvavo.debugging:
                 logger.debug("message-sent", message=message)
 
-        def on_message(self, ws, msg: str) -> None:  # noqa: C901 (too-complex)
+        def on_message(self, ws: Any, msg: str) -> None:  # noqa: C901 (too-complex)
             if self.bitvavo.debugging:
                 logger.debug("message-received", message=msg)
             msg_dict: anydict = json.loads(msg)
@@ -1651,7 +1666,7 @@ class Bitvavo:
                 if "error" in callbacks:
                     callbacks["error"](msg_dict)
                 else:
-                    logger.error(msg_dict)
+                    logger.error("error", msg_dict=msg_dict)
 
             if "action" in msg_dict:
                 if msg_dict["action"] == "getTime":
@@ -1738,13 +1753,13 @@ class Bitvavo:
                     if "subscriptionTrades" in callbacks:
                         callbacks["subscriptionTrades"][market](msg_dict)
 
-        def on_error(self, ws, error: Any) -> None:
+        def on_error(self, ws: Any, error: Any) -> None:
             if "error" in self.callbacks:
                 self.callbacks["error"](error)
             else:
                 logger.error(error)
 
-        def on_close(self, ws) -> None:
+        def on_close(self, ws: Any) -> None:
             self.receiveThread.stop()
             if self.bitvavo.debugging:
                 logger.debug("websocket-closed")
@@ -1777,7 +1792,7 @@ class Bitvavo:
                 for market in self.callbacks["subscriptionBookUser"]:
                     self.subscriptionBook(market, self.callbacks["subscriptionBookUser"][market])
 
-        def on_open(self, ws) -> None:
+        def on_open(self, ws: Any) -> None:
             now = time_ms() + BITVAVO_API_UPGRADED.LAG
             self.open = True
             self.reconnectTimer = 0.5
@@ -2034,7 +2049,13 @@ class Bitvavo:
             options["action"] = "getTrades"
             self.doSend(self.ws, json.dumps(options))
 
-        def candles(self, market: str, interval: str, options: anydict, callback: Callable[[Any], None]) -> None:
+        def candles(
+            self,
+            market: str,
+            interval: str,
+            options: anydict,
+            callback: Callable[[Any], None],
+        ) -> None:
             """Get up to 1440 candles for a market, with a specific interval (candle size)
 
             Extra reading material: https://en.wikipedia.org/wiki/Candlestick_chart
@@ -2382,7 +2403,13 @@ class Bitvavo:
             body["action"] = "privateCreateOrder"
             self.doSend(self.ws, json.dumps(body), True)
 
-        def updateOrder(self, market: str, orderId: str, body: anydict, callback: Callable[[Any], None]) -> None:
+        def updateOrder(
+            self,
+            market: str,
+            orderId: str,
+            body: anydict,
+            callback: Callable[[Any], None],
+        ) -> None:
             """Update an existing order for a specific market. Make sure that at least one of the optional parameters is set,
             otherwise nothing will be updated.
 

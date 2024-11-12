@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 
-echo "installing tox dependencies"
-sudo apt-get install python3-distutils python3-apt --yes
+echo "installing latest uv"
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
 echo "prepare the program for... programming"
-pip install -r requirements/dev.txt
-pip install -e .
+uv sync
 
 echo "setup local git settings"
 git config pull.rebase true  # rebase on pulls, in case of conflicts
