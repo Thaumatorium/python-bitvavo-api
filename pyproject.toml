@@ -52,27 +52,20 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
-    "autoflake>=1.4", # auto-remove unused imports (to prevent flake8 from crying about it)
-    "black>=24.0", # opinionated formatter
-    "bump2version>=1.0.1", # for version management of the lib
-    "check-manifest>=0.47", # to check and create the MANIFEST.in file (for the source distribution)
-    "cookiecutter>=1.7.3", # cookiecutter gh:ionelmc/cookiecutter-pylibrary
-    "coverage[toml]>=6.1.1", # for code coverage; I prefer this over pytest-cov (though I need pytest-cov for vscode coverage)
-    "flake8>=3.9.2", # linter for python. I prefer it over pylint due to extensibility
-    "isort>=5.10.0", # sort imports
-    "mdformat>=0.7.11", # for formatting markdown (.md) documents
-    "mkdocs>=1.2.3", # for markdown documentation
-    "mypy>=1.13", # amazing linter
-    "pre-commit>=2.15.0", # for running hooks before committing code
+    "bump2version>=1.0.1",       # for version management of the lib
+    "check-manifest>=0.47",      # to check and create the MANIFEST.in file (for the source distribution)
+    "mdformat>=0.7.11",          # for formatting markdown (.md) documents
+    "mkdocs>=1.2.3",             # for markdown documentation
+    "mypy>=1.13",                # amazing linter
+    "pre-commit>=2.15.0",        # for running hooks before committing code
     "pytest-integration>=0.2.2", # for @mark additions
-    "pytest-mock>=3.6.1", # for the `mocker` MockerFixture fixture
-    "pytest-cov>=1", # vscode has native coverage, but when using pytest, vscode will presume you'll use pytest-cov
-    "pytest>=6.2.4", # you can run `pytest` to run the unit tests; will also be run by `tox` :)
-    "pyupgrade>=2.29.0", # to make sure code conforms to certain minimal version
-    "tox-uv>=1.16.0", # to ensure tox can use uv
-    "tox>=3.24.4", # run `tox` to test everything
-    "types-requests>=2.26.2", # typing for mypy
-    "ruff>=0.7.3",
+    "pytest-mock>=3.6.1",        # for the `mocker` MockerFixture fixture
+    "pytest-cov>=1",             # vscode has native coverage, but when using pytest, vscode will presume you'll use pytest-cov
+    "pytest>=6.2.4",             # you can run `pytest` to run the unit tests; will also be run by `tox` :)
+    "tox-uv>=1.16.0",            # to ensure tox can use uv
+    "tox>=3.24.4",               # run `tox` to test everything
+    "types-requests>=2.26.2",    # typing for mypy
+    "ruff>=0.7.3",               # replaces auotflake, black, flake8, isort, pyupgrade
 ]
 
 
@@ -284,6 +277,12 @@ ignore = [
     "COM812", # (missing-trailing-comma)
     "ISC001", # (single-line-implicit-string-concatenation)
     "ANN401", # (any-type)
+    # above this, is based on some other project
+    "N802",   # (invalid-function-name) - this is due to how Bitvavo defined their functions
+    "N803",   # invalid-argument-name
+    "N806",   # (non-lowercase-variable-in-function)
+    "FBT003", # (boolean-positional-value-in-call) - same as N802
+    "T201",   # (print)
 ]
 
 # Allow fix for all enabled rules (when `--fix`) is provided.
@@ -323,6 +322,7 @@ docstring-code-format = false
 docstring-code-line-length = "dynamic"
 
 [tool.ruff.lint.extend-per-file-ignores]
+# These are the rules we can ignore for tests
 "tests/**/*.py" = [
     "S101",    # (suspicious-non-cryptographic-random-usage)
     "ARG",     # (flake8-unused-arguments)

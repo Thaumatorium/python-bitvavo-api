@@ -31,7 +31,8 @@ def bitvavo() -> Bitvavo:
 @pytest.fixture(scope="session")
 def websocket(bitvavo: Bitvavo) -> Bitvavo.WebSocketAppFacade:
     def errorCallback(error: Any) -> None:
-        logger.error(f"Error callback: {error}")
+        msg = f"Error callback: {error}"
+        logger.error(msg)
 
     bitvavo = Bitvavo(
         {

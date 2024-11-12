@@ -15,12 +15,12 @@ class _BitvavoApiUpgraded:
     LOG_LEVEL: str = config(
         "BITVAVO_API_UPGRADED_LOG_LEVEL",
         default="INFO",
-        cast=Choices(list(logging._nameToLevel.keys())),
+        cast=Choices(list(logging._nameToLevel.keys())),  # noqa: SLF001
     )
     LOG_EXTERNAL_LEVEL: str = config(
         "BITVAVO_API_UPGRADED_EXTERNAL_LOG_LEVEL",
         default="WARNING",
-        cast=Choices(list(logging._nameToLevel.keys())),
+        cast=Choices(list(logging._nameToLevel.keys())),  # noqa: SLF001
     )
     LAG: ms = config("BITVAVO_API_UPGRADED_LAG", default=ms(50), cast=ms)
     RATE_LIMITING_BUFFER: int = config("BITVAVO_API_UPGRADED_RATE_LIMITING_BUFFER", default=25, cast=int)

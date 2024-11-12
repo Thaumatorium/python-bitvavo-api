@@ -6,7 +6,7 @@
 
 Works the same as the official API lib, but I have:
 
-- typing for *all* functions and classes
+- typing for _all_ functions and classes
 - unit tests (I already found three bugs that I fixed, because the original code
   wasn't tested, at all)
 - a changelog, so you can track of the changes that I make
@@ -42,21 +42,23 @@ version bump
 ## $UNRELEASED
 
 ### Added
+
 ...
 
 ### Changed
+
 ...
 
 ### Removed
+
 ...
 ```
 
 Commit those changes.
 
 After that, run `bump2version (major|minor|patch)` to automatically replace
-`$UNRELEASED` with the new version number,
-and also automatically tag and commit (with tag) to release a new version via
-the Github workflow.
+`$UNRELEASED` with the new version number, and also automatically tag and commit
+(with tag) to release a new version via the Github workflow.
 
 ## py.typed
 
@@ -66,9 +68,9 @@ typed: [Don't forget `py.typed` for your typed Python package
 
 ## Last note
 
-*below this line is the old README.md*
+_below this line is the old README.md_
 
-______________________________________________________________________
+---
 
 <p align="center">
   <br>
@@ -87,14 +89,11 @@ documentation](https://docs.bitvavo.com/)
   [REST](https://github.com/bitvavo/python-bitvavo-api#getting-started)
   [Websocket](https://github.com/bitvavo/python-bitvavo-api#getting-started-1)
 - General
-  - Time
-    [REST](https://github.com/bitvavo/python-bitvavo-api#get-time)
+  - Time [REST](https://github.com/bitvavo/python-bitvavo-api#get-time)
     [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-time-1)
-  - Markets
-    [REST](https://github.com/bitvavo/python-bitvavo-api#get-markets)
+  - Markets [REST](https://github.com/bitvavo/python-bitvavo-api#get-markets)
     [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-markets-1)
-  - Assets
-    [REST](https://github.com/bitvavo/python-bitvavo-api#get-assets)
+  - Assets [REST](https://github.com/bitvavo/python-bitvavo-api#get-assets)
     [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-assets-1)
 - Market Data
   - Book
@@ -122,14 +121,12 @@ documentation](https://docs.bitvavo.com/)
   - Update Order
     [REST](https://github.com/bitvavo/python-bitvavo-api#update-order)
     [Websocket](https://github.com/bitvavo/python-bitvavo-api#update-order-1)
-  - Get Order
-    [REST](https://github.com/bitvavo/python-bitvavo-api#get-order)
+  - Get Order [REST](https://github.com/bitvavo/python-bitvavo-api#get-order)
     [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-order-1)
   - Cancel Order
     [REST](https://github.com/bitvavo/python-bitvavo-api#cancel-order)
     [Websocket](https://github.com/bitvavo/python-bitvavo-api#cancel-order-1)
-  - Get Orders
-    [REST](https://github.com/bitvavo/python-bitvavo-api#get-orders)
+  - Get Orders [REST](https://github.com/bitvavo/python-bitvavo-api#get-orders)
     [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-orders-1)
   - Cancel Orders
     [REST](https://github.com/bitvavo/python-bitvavo-api#cancel-orders)
@@ -137,14 +134,11 @@ documentation](https://docs.bitvavo.com/)
   - Orders Open
     [REST](https://github.com/bitvavo/python-bitvavo-api#get-orders-open)
     [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-orders-open-1)
-  - Trades
-    [REST](https://github.com/bitvavo/python-bitvavo-api#get-trades)
+  - Trades [REST](https://github.com/bitvavo/python-bitvavo-api#get-trades)
     [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-trades-1)
-  - Account
-    [REST](https://github.com/bitvavo/python-bitvavo-api#get-account)
+  - Account [REST](https://github.com/bitvavo/python-bitvavo-api#get-account)
     [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-account-1)
-  - Balance
-    [REST](https://github.com/bitvavo/python-bitvavo-api#get-balance)
+  - Balance [REST](https://github.com/bitvavo/python-bitvavo-api#get-balance)
     [Websocket](https://github.com/bitvavo/python-bitvavo-api#get-balance-1)
   - Deposit Assets
     [REST](https://github.com/bitvavo/python-bitvavo-api#deposit-assets)
@@ -432,7 +426,7 @@ print(response)
  <summary>View Response</summary>
 
 ```python
-[ 
+[
   {
     "id": "041689b3-cbb6-49ec-9964-2fb2d353dd1b",
     "timestamp": 1565672192018,
@@ -884,10 +878,10 @@ print(response)
 [
   {
     "orderId": "4f9a809b-859f-4d8d-97b3-037113cdf2d0"
-  }, 
+  },
   {
     "orderId": "95313ae5-ad65-4430-a0fb-63591bbc337c".
-  }, 
+  },
   {
     "orderId": "2465c3ab-5ae2-4d4d-bec7-345f51b3494d"
   },
@@ -1434,7 +1428,7 @@ websocket.publicTrades("BTC-EUR", {}, ownCallback)
  <summary>View Response</summary>
 
 ```python
-[ 
+[
   {
     "id": "041689b3-cbb6-49ec-9964-2fb2d353dd1b",
     "timestamp": 1565672192018,
@@ -1876,10 +1870,10 @@ websocket.cancelOrders({}, ownCallback)
 [
   {
     "orderId": "4f9a809b-859f-4d8d-97b3-037113cdf2d0"
-  }, 
+  },
   {
     "orderId": "95313ae5-ad65-4430-a0fb-63591bbc337c".
-  }, 
+  },
   {
     "orderId": "2465c3ab-5ae2-4d4d-bec7-345f51b3494d"
   },

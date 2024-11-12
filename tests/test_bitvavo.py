@@ -1,6 +1,8 @@
 """
-Most of these tests check the keys of the response, the size of the response, the types of the response, which type
-those values can be cast to (as quite a few responses return strings which are obviously int or float types, but those usually can also return "none")
+Most of these tests check the keys of the response, the size of the response,
+the types of the response, which type those values can be cast to (as quite a
+few responses return strings which are obviously int or float types, but those
+usually can also return "none")
 """
 
 from __future__ import annotations
@@ -10,7 +12,7 @@ import logging
 from time import sleep
 from typing import Any
 
-from pytest import CaptureFixture, LogCaptureFixture, mark
+import pytest
 
 from bitvavo_api_upgraded.bitvavo import (
     Bitvavo,
@@ -34,22 +36,22 @@ logger = logging.getLogger("test_bitvavo")
 
 
 def test_createPostfix_happy_path() -> None:
-    input = {
+    postfix_input = {
         "option1": "value1",
         "option2": "value2",
         "option3": 3,
         "option4": ["yeet", "yote"],
     }
 
-    output = createPostfix(input)
+    output = createPostfix(postfix_input)
 
     assert output == "?option1=value1&option2=value2&option3=3&option4=['yeet', 'yote']"
 
 
 def test_createPostfix_empty_input() -> None:
-    input: anydict = {}
+    postfix_input: anydict = {}
 
-    output = createPostfix(input)
+    output = createPostfix(postfix_input)
 
     assert output == ""
 
@@ -85,7 +87,7 @@ class TestBitvavo:
 
     def test_remaining_limit(self, bitvavo: Bitvavo) -> None:
         limit = bitvavo.getRemainingLimit()
-        assert 0 < limit and limit <= 1000, "default remaining limit should be between 1000 and 0"
+        assert 0 < limit <= 1000, "default remaining limit should be between 1000 and 0"
 
     def test_no_error(self, bitvavo: Bitvavo) -> None:
         """
@@ -157,7 +159,7 @@ class TestBitvavo:
         412: {"errorCode":412,"error":"eth_address_invalid."}
         413: This address violates the whitelist.
         414: You cannot withdraw assets within 2 minutes of logging in.
-        """
+        """  # noqa: E501 (Line too long)
         response = bitvavo.time()
         assert "error" not in response
         assert "errorCode" not in response
@@ -487,10 +489,8 @@ class TestBitvavo:
         assert isinstance(response, list)
 
         for ticker_24h in response:
-            # assert len(ticker_24h) == 15
             assert "market" in ticker_24h
             assert "open" in ticker_24h
-            # assert "close" in ticker_24h
             assert "high" in ticker_24h
             assert "low" in ticker_24h
             assert "last" in ticker_24h
@@ -596,7 +596,7 @@ class TestBitvavo:
             assert float(response["askSize"]) >= 0
             assert int(response["timestamp"])
 
-    @mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
+    @pytest.mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
     def test_place_order_buy(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.placeOrder(
             market="BTC-EUR",
@@ -606,7 +606,7 @@ class TestBitvavo:
         )
         print(json.dumps(response, indent=2))
 
-    @mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
+    @pytest.mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
     def test_place_order_sell(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.placeOrder(
             market="BTC-EUR",
@@ -621,7 +621,7 @@ class TestBitvavo:
         )
         print(json.dumps(response, indent=2))
 
-    @mark.skip(reason="This test is very sentsitive to the data on the account, so I'm skipping it")
+    @pytest.mark.skip(reason="This test is very sentsitive to the data on the account, so I'm skipping it")
     def test_get_order(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.getOrder(market="BTC-EUR", orderId="dd055772-0f02-493c-a049-f4356fa0d221")
 
@@ -634,7 +634,7 @@ class TestBitvavo:
         assert response["error"] == long_str
         assert response["errorCode"] == 240
 
-    @mark.skip(reason="This test is very sentsitive to the data on the account, so I'm skipping it")
+    @pytest.mark.skip(reason="This test is very sentsitive to the data on the account, so I'm skipping it")
     def test_update_order(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.updateOrder(
             market="BTC-EUR",
@@ -650,7 +650,7 @@ class TestBitvavo:
             == "No order found. Please be aware that simultaneously updating the same order may return this error."
         )
 
-    @mark.skip(reason="This test is very sentsitive to the data on the account, so I'm skipping it")
+    @pytest.mark.skip(reason="This test is very sentsitive to the data on the account, so I'm skipping it")
     def test_cancel_order(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.cancelOrder(market="BTC-EUR", orderId="dd055772-0f02-493c-a049-f4356fa0d221")
         assert len(response) == 2
@@ -666,7 +666,7 @@ class TestBitvavo:
         response = bitvavo.getOrders(market="BTC-EUR", options={})
         assert response == []  # at least it's not an error or something
 
-    @mark.skip(reason="I'm not touching methods where I can accidentally cancel all my orders")
+    @pytest.mark.skip(reason="I'm not touching methods where I can accidentally cancel all my orders")
     def test_cancel_orders_all(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.cancelOrders(options={})
 
@@ -677,7 +677,7 @@ class TestBitvavo:
         assert response["errorCode"] == 311
         assert response["error"] == "This key does not allowing showing account information."
 
-    @mark.skip(reason="I'm not touching methods where I can accidentally cancel all my orders")
+    @pytest.mark.skip(reason="I'm not touching methods where I can accidentally cancel all my orders")
     def test_cancel_orders_one_market(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.cancelOrders(options={"market": "BTC-EUR"})
 
@@ -688,7 +688,7 @@ class TestBitvavo:
         assert response["errorCode"] == 311
         assert response["error"] == "This key does not allowing showing account information."
 
-    def test_orders_open_list_all(self, bitvavo: Bitvavo) -> None:
+    def test_orders_open_list_all(self, bitvavo: Bitvavo) -> None:  # noqa: PLR0915
         response = bitvavo.ordersOpen(options={})
 
         if isinstance(response, list):
@@ -754,7 +754,7 @@ class TestBitvavo:
                 assert item["selfTradePrevention"] in ["decrementAndCancel"]
                 assert item["timeInForce"] in ["GTC"]
 
-    def test_orders_open_list_single(self, bitvavo: Bitvavo) -> None:
+    def test_orders_open_list_single(self, bitvavo: Bitvavo) -> None:  # noqa: PLR0915
         response = bitvavo.ordersOpen(options={"market": "DIA-EUR"})
 
         if isinstance(response, list):
@@ -845,14 +845,14 @@ class TestBitvavo:
         assert float(response["fees"]["taker"]) >= 0
 
         assert len(response["capabilities"]) == 6
-        assert [
+        assert response["capabilities"] == [
             "buy",
             "sell",
             "depositCrypto",
             "depositFiat",
             "withdrawCrypto",
             "withdrawFiat",
-        ] == response["capabilities"]
+        ]
 
     def test_balance_all(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.balance(options={})
@@ -917,7 +917,9 @@ class TestBitvavo:
         assert isinstance(response["address"], str)
         assert response["address"].startswith("0x")  # only counts for SHIB (?)
 
-    @mark.skip(reason='errorCode=400, error: "Unknown error. Please contact support with a copy of your request"')
+    @pytest.mark.skip(
+        reason='errorCode=400, error: "Unknown error. Please contact support with a copy of your request"'
+    )
     def test_deposit_assets_fiat(self, bitvavo: Bitvavo) -> None:
         """
         2024-11-11: This functionality seems to have changed completely?
@@ -943,7 +945,9 @@ class TestBitvavo:
         """
         2024-11-11: test later with different key
         """
-        bitcoin_address = "SomeBitcoinAddress"  # Keep this fake or non-existant, otherwise you're passing money around when testing...
+        # Keep `bitcoin_address` fake or non-existant, otherwise you're passing
+        # money around when testing...
+        bitcoin_address = "SomeBitcoinAddress"
         response = bitvavo.withdrawAssets("BTC", "1", bitcoin_address, {})
 
         assert "errorCode" in response
@@ -985,12 +989,14 @@ class TestBitvavo:
         Note That you'll still receive multiple results, as "symbol" is not unique within the deposit history.
         """
         # if this test fails, make sure you have EUR in your deposit history.
-        # Debug the _all variant, with a breakpoint or `raise ValueError(response)`, to see what you do have EUR (if any).
+        # Debug the _all variant, with a breakpoint or `raise
+        # ValueError(response)`, to see what you do have EUR (if any).
         response = bitvavo.depositHistory(options={"symbol": "EUR"})
 
         assert isinstance(response, list)
 
-        # I had at least 5 EUR transfers on my account. This is not a special number or anything ;)
+        # I had at least 5 EUR transfers on my account. This is not a special
+        # number or anything ;)
         assert len(response) >= 5
 
         for item in response:
@@ -1080,7 +1086,10 @@ class TestBitvavo:
         for item in response:
             assert float(item["amount"]) >= 0
             assert float(item["fee"]) >= 0
-            assert item["status"] in ["completed", "awaiting_processing"]  # FIXME expand this list, if possible
+            assert item["status"] in [
+                "completed",
+                "awaiting_processing",
+            ]  # TODO(NostraDavid): expand this list, if possible
 
 
 # Normally you would define a seperate callback for every function.
@@ -1121,7 +1130,7 @@ class TestWebsocket:
 
     My recommendation is to stick to using the regular Bitvavo object and ignore the websocket, unless you have a ton
     of experience and *need* to use a websocket for your use case :)
-    """
+    """  # noqa: E501
 
     def wait(self) -> None:
         """
@@ -1129,7 +1138,7 @@ class TestWebsocket:
         This method waits for some time in the hopes that the websocket is done within that time.
         If you do not have this waiting time, the logs won't print because those are created by a separate thread,
         which would not be able to actually print the logs, because the main thread will be done running before receiving the logs.
-        """
+        """  # noqa: E501
         # If all websocket tests fail, just up this number
         sleep(1)
 
@@ -1141,8 +1150,8 @@ class TestWebsocket:
 
     def test_time(
         self,
-        caplog: LogCaptureFixture,
-        capsys: CaptureFixture[str],
+        caplog: pytest.LogCaptureFixture,
+        capsys: pytest.CaptureFixture[str],
         websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         try:
@@ -1154,12 +1163,12 @@ class TestWebsocket:
             assert 'generic_callback: {\n  "time":' in stdout
             assert stderr == ""
         except TypeError:
-            assert False
+            pytest.fail("test_time raised TypeError")
 
     def test_markets(
         self,
-        caplog: LogCaptureFixture,
-        capsys: CaptureFixture[str],
+        caplog: pytest.LogCaptureFixture,
+        capsys: pytest.CaptureFixture[str],
         websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.markets(options={"market": "BTC-EUR"}, callback=generic_callback)
@@ -1172,8 +1181,8 @@ class TestWebsocket:
 
     def test_assets(
         self,
-        caplog: LogCaptureFixture,
-        capsys: CaptureFixture[str],
+        caplog: pytest.LogCaptureFixture,
+        capsys: pytest.CaptureFixture[str],
         websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.assets(options={}, callback=generic_callback)
@@ -1186,8 +1195,8 @@ class TestWebsocket:
 
     def test_book(
         self,
-        caplog: LogCaptureFixture,
-        capsys: CaptureFixture[str],
+        caplog: pytest.LogCaptureFixture,
+        capsys: pytest.CaptureFixture[str],
         websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.book(market="BTC-EUR", options={}, callback=generic_callback)
@@ -1201,8 +1210,8 @@ class TestWebsocket:
 
     def test_public_trades(
         self,
-        caplog: LogCaptureFixture,
-        capsys: CaptureFixture[str],
+        caplog: pytest.LogCaptureFixture,
+        capsys: pytest.CaptureFixture[str],
         websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.publicTrades(market="BTC-EUR", options={}, callback=generic_callback)
@@ -1215,8 +1224,8 @@ class TestWebsocket:
 
     def test_candles(
         self,
-        caplog: LogCaptureFixture,
-        capsys: CaptureFixture[str],
+        caplog: pytest.LogCaptureFixture,
+        capsys: pytest.CaptureFixture[str],
         websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.candles(market="BTC-EUR", interval="1h", options={}, callback=generic_callback)
@@ -1229,8 +1238,8 @@ class TestWebsocket:
 
     def test_ticker_24h(
         self,
-        caplog: LogCaptureFixture,
-        capsys: CaptureFixture[str],
+        caplog: pytest.LogCaptureFixture,
+        capsys: pytest.CaptureFixture[str],
         websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.ticker24h(options={}, callback=generic_callback)
@@ -1243,8 +1252,8 @@ class TestWebsocket:
 
     def test_ticker_price(
         self,
-        caplog: LogCaptureFixture,
-        capsys: CaptureFixture[str],
+        caplog: pytest.LogCaptureFixture,
+        capsys: pytest.CaptureFixture[str],
         websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.tickerPrice(options={}, callback=generic_callback)
@@ -1257,8 +1266,8 @@ class TestWebsocket:
 
     def test_ticker_book(
         self,
-        caplog: LogCaptureFixture,
-        capsys: CaptureFixture[str],
+        caplog: pytest.LogCaptureFixture,
+        capsys: pytest.CaptureFixture[str],
         websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.tickerBook(options={}, callback=generic_callback)
@@ -1269,11 +1278,11 @@ class TestWebsocket:
         assert stderr == ""
         assert 'generic_callback: [\n  {\n    "market": "1INCH-EUR",\n    "bid": ' in stdout
 
-    @mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
+    @pytest.mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
     def test_place_order(
         self,
-        caplog: LogCaptureFixture,
-        capsys: CaptureFixture[str],
+        caplog: pytest.LogCaptureFixture,
+        capsys: pytest.CaptureFixture[str],
         websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.placeOrder(
@@ -1284,11 +1293,11 @@ class TestWebsocket:
             callback=generic_callback,
         )
 
-    @mark.skip(reason="properly broken?")
+    @pytest.mark.skip(reason="properly broken?")
     def test_get_order(
         self,
-        caplog: LogCaptureFixture,
-        capsys: CaptureFixture[str],
+        caplog: pytest.LogCaptureFixture,
+        capsys: pytest.CaptureFixture[str],
         websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         """
@@ -1303,18 +1312,18 @@ class TestWebsocket:
 
         assert "'errorCode': 240" in caplog.text
         assert (
-            "'error': 'No order found. Please be aware that simultaneously updating the same order may return this error.'"
-            in caplog.text
-        )
+            "'error': 'No order found. Please be aware that simultaneously updating"
+            " the same order may return this error.'"
+        ) in caplog.text
         stdout, stderr = capsys.readouterr()
         assert stderr == ""
         assert stdout == ""
 
-    @mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
+    @pytest.mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
     def test_update_order(
         self,
-        caplog: LogCaptureFixture,
-        capsys: CaptureFixture[str],
+        caplog: pytest.LogCaptureFixture,
+        capsys: pytest.CaptureFixture[str],
         websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.updateOrder(
@@ -1324,11 +1333,11 @@ class TestWebsocket:
             callback=generic_callback,
         )
 
-    @mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
+    @pytest.mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
     def test_cancel_order(
         self,
-        caplog: LogCaptureFixture,
-        capsys: CaptureFixture[str],
+        caplog: pytest.LogCaptureFixture,
+        capsys: pytest.CaptureFixture[str],
         websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.cancelOrder(
@@ -1339,8 +1348,8 @@ class TestWebsocket:
 
     def test_get_orders(
         self,
-        caplog: LogCaptureFixture,
-        capsys: CaptureFixture[str],
+        caplog: pytest.LogCaptureFixture,
+        capsys: pytest.CaptureFixture[str],
         websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.getOrders(market="BTC-EUR", options={}, callback=generic_callback)
@@ -1351,19 +1360,19 @@ class TestWebsocket:
         assert stderr == ""
         assert "generic_callback: []\n" in stdout
 
-    @mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
+    @pytest.mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
     def test_cancel_orders(
         self,
-        caplog: LogCaptureFixture,
-        capsys: CaptureFixture[str],
+        caplog: pytest.LogCaptureFixture,
+        capsys: pytest.CaptureFixture[str],
         websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.cancelOrders(options={"market": "BTC-EUR"}, callback=generic_callback)
 
     def test_orders_open(
         self,
-        caplog: LogCaptureFixture,
-        capsys: CaptureFixture[str],
+        caplog: pytest.LogCaptureFixture,
+        capsys: pytest.CaptureFixture[str],
         websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.ordersOpen(options={}, callback=generic_callback)
@@ -1376,8 +1385,8 @@ class TestWebsocket:
 
     def test_trades(
         self,
-        caplog: LogCaptureFixture,
-        capsys: CaptureFixture[str],
+        caplog: pytest.LogCaptureFixture,
+        capsys: pytest.CaptureFixture[str],
         websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.trades(market="BTC-EUR", options={}, callback=generic_callback)
@@ -1390,8 +1399,8 @@ class TestWebsocket:
 
     def test_account(
         self,
-        caplog: LogCaptureFixture,
-        capsys: CaptureFixture[str],
+        caplog: pytest.LogCaptureFixture,
+        capsys: pytest.CaptureFixture[str],
         websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.account(callback=generic_callback)
@@ -1404,8 +1413,8 @@ class TestWebsocket:
 
     def test_balance(
         self,
-        caplog: LogCaptureFixture,
-        capsys: CaptureFixture[str],
+        caplog: pytest.LogCaptureFixture,
+        capsys: pytest.CaptureFixture[str],
         websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.balance(options={}, callback=generic_callback)
@@ -1416,20 +1425,20 @@ class TestWebsocket:
         assert stderr == ""
         assert 'generic_callback: [\n  {\n    "symbol": ' in stdout
 
-    @mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
+    @pytest.mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
     def test_deposit_assets(
         self,
-        caplog: LogCaptureFixture,
-        capsys: CaptureFixture[str],
+        caplog: pytest.LogCaptureFixture,
+        capsys: pytest.CaptureFixture[str],
         websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.depositAssets("BTC", callback=generic_callback)
 
-    @mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
+    @pytest.mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
     def test_withdraw_assets(
         self,
-        caplog: LogCaptureFixture,
-        capsys: CaptureFixture[str],
+        caplog: pytest.LogCaptureFixture,
+        capsys: pytest.CaptureFixture[str],
         websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.withdrawAssets(
@@ -1442,8 +1451,8 @@ class TestWebsocket:
 
     def test_deposit_history(
         self,
-        caplog: LogCaptureFixture,
-        capsys: CaptureFixture[str],
+        caplog: pytest.LogCaptureFixture,
+        capsys: pytest.CaptureFixture[str],
         websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.depositHistory(options={}, callback=generic_callback)
@@ -1456,8 +1465,8 @@ class TestWebsocket:
 
     def test_withdrawal_history(
         self,
-        caplog: LogCaptureFixture,
-        capsys: CaptureFixture[str],
+        caplog: pytest.LogCaptureFixture,
+        capsys: pytest.CaptureFixture[str],
         websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.withdrawalHistory(options={}, callback=generic_callback)
@@ -1468,11 +1477,11 @@ class TestWebsocket:
         assert stderr == ""
         assert 'generic_callback: [\n  {\n    "timestamp":' in stdout
 
-    @mark.skip(reason="It's really hard to test a method that may or may not return data")
+    @pytest.mark.skip(reason="It's really hard to test a method that may or may not return data")
     def test_subscription_ticker(
         self,
-        caplog: LogCaptureFixture,
-        capsys: CaptureFixture[str],
+        caplog: pytest.LogCaptureFixture,
+        capsys: pytest.CaptureFixture[str],
         websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.subscriptionTicker(market="BTC-EUR", callback=generic_callback)
@@ -1485,11 +1494,11 @@ class TestWebsocket:
         assert stderr == ""
         assert 'generic_callback: {\n  "event": "ticker",\n  "market": "BTC-EUR",\n  "bestAsk": ' in stdout
 
-    @mark.skip(reason="It's really hard to test a method that may or may not return data")
+    @pytest.mark.skip(reason="It's really hard to test a method that may or may not return data")
     def test_subscription_ticker_24h(
         self,
-        caplog: LogCaptureFixture,
-        capsys: CaptureFixture[str],
+        caplog: pytest.LogCaptureFixture,
+        capsys: pytest.CaptureFixture[str],
         websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.subscriptionTicker24h(market="BTC-EUR", callback=generic_callback)
@@ -1502,11 +1511,11 @@ class TestWebsocket:
         assert stderr == ""
         assert 'generic_callback: {\n  "market": "BTC-EUR",\n  "open": "' in stdout
 
-    @mark.skip(reason="It's really hard to test a method that may or may not return data")
+    @pytest.mark.skip(reason="It's really hard to test a method that may or may not return data")
     def test_subscription_ticker_account(
         self,
-        caplog: LogCaptureFixture,
-        capsys: CaptureFixture[str],
+        caplog: pytest.LogCaptureFixture,
+        capsys: pytest.CaptureFixture[str],
         websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.subscriptionAccount(market="BTC-EUR", callback=generic_callback)
@@ -1519,11 +1528,11 @@ class TestWebsocket:
         assert stderr == ""
         assert "" in stdout  # no output found manually ;_;
 
-    @mark.skip(reason="It's really hard to test a method that may or may not return data")
+    @pytest.mark.skip(reason="It's really hard to test a method that may or may not return data")
     def test_subscription_ticker_candles(
         self,
-        caplog: LogCaptureFixture,
-        capsys: CaptureFixture[str],
+        caplog: pytest.LogCaptureFixture,
+        capsys: pytest.CaptureFixture[str],
         websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.subscriptionCandles(market="BTC-EUR", interval="1h", callback=generic_callback)
@@ -1535,15 +1544,15 @@ class TestWebsocket:
         stdout, stderr = capsys.readouterr()
         assert stderr == ""
         assert (
-            'generic_callback: {\n  "event": "candle",\n  "market": "BTC-EUR",\n  "interval": "1h",\n  "candle": [\n    [\n      '
+            'generic_callback: {\n  "event": "candle",\n  "market": "BTC-EUR",\n  "interval": "1h",\n  "candle": [\n   '
             in stdout
         )
 
-    @mark.skip(reason="It's really hard to test a method that may or may not return data")
+    @pytest.mark.skip(reason="It's really hard to test a method that may or may not return data")
     def test_subscription_trades(
         self,
-        caplog: LogCaptureFixture,
-        capsys: CaptureFixture[str],
+        caplog: pytest.LogCaptureFixture,
+        capsys: pytest.CaptureFixture[str],
         websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.subscriptionTrades(market="BTC-EUR", callback=generic_callback)
@@ -1556,11 +1565,11 @@ class TestWebsocket:
         assert stderr == ""
         assert 'generic_callback: {\n  "event": "trade",\n  "timestamp": ' in stdout
 
-    @mark.skip(reason="It's really hard to test a method that may or may not return data")
+    @pytest.mark.skip(reason="It's really hard to test a method that may or may not return data")
     def test_subscription_book_update(
         self,
-        caplog: LogCaptureFixture,
-        capsys: CaptureFixture[str],
+        caplog: pytest.LogCaptureFixture,
+        capsys: pytest.CaptureFixture[str],
         websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.subscriptionBookUpdate(market="BTC-EUR", callback=generic_callback)
@@ -1573,11 +1582,11 @@ class TestWebsocket:
         assert stderr == ""
         assert 'generic_callback: {\n  "event": "book",\n  "market": "BTC-EUR",\n  "nonce": ' in stdout
 
-    @mark.skip(reason="It's really hard to test a method that may or may not return data")
+    @pytest.mark.skip(reason="It's really hard to test a method that may or may not return data")
     def test_subscription_book(
         self,
-        caplog: LogCaptureFixture,
-        capsys: CaptureFixture[str],
+        caplog: pytest.LogCaptureFixture,
+        capsys: pytest.CaptureFixture[str],
         websocket: Bitvavo.WebSocketAppFacade,
     ) -> None:
         websocket.subscriptionBook(market="BTC-EUR", callback=generic_callback)

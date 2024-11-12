@@ -11,8 +11,8 @@ strdict = dict[str, str]
 intdict = dict[str, int]
 errordict = dict[str, Any]  # same type as anydict, but the semantics/meaning is different
 
-# note: You can also use these for type conversion, so instead of int(some_float / 1000), you can just do ms(some_float / 1000)
-# units
+# note: You can also use these for type conversion, so instead of int(some_float / 1000), you can just do ms(some_float
+# / 1000) units
 s = int  # seconds
 ms = int  # milliseconds
 us = int  # microseconds, normally written as μs, but nobody has the μ (mu) symbol on their keyboard, so `us` it is.

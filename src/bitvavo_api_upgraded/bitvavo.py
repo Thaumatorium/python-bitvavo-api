@@ -22,11 +22,11 @@ configure_loggers()
 logger = get_logger(__name__)
 
 
-def createSignature(timestamp: ms, method: str, url: str, body: anydict, APISECRET: str) -> str:
+def createSignature(timestamp: ms, method: str, url: str, body: anydict, api_secret: str) -> str:
     string = f"{timestamp}{method}/v2{url}"
     if len(body.keys()) != 0:
         string += json.dumps(body, separators=(",", ":"))
-    signature = hmac.new(APISECRET.encode("utf-8"), string.encode("utf-8"), hashlib.sha256).hexdigest()
+    signature = hmac.new(api_secret.encode("utf-8"), string.encode("utf-8"), hashlib.sha256).hexdigest()
     return signature
 
 
@@ -72,10 +72,9 @@ def sortAndInsert(
                     asks_or_bids[j] = updateEntry
                     entrySet = True
                     break
-                else:
-                    asks_or_bids.pop(j)
-                    entrySet = True
-                    break
+                asks_or_bids.pop(j)
+                entrySet = True
+                break
         if not entrySet:
             asks_or_bids.append(updateEntry)
     return asks_or_bids
@@ -90,24 +89,23 @@ def processLocalBook(ws: Bitvavo.WebSocketAppFacade, message: anydict) -> None:
             ws.localBook[market]["asks"] = message["response"]["asks"]
             ws.localBook[market]["nonce"] = message["response"]["nonce"]
             ws.localBook[market]["market"] = market
-    elif "event" in message:
-        if message["event"] == "book":
-            market = message["market"]
+    elif "event" in message and message["event"] == "book":
+        market = message["market"]
 
-            if message["nonce"] != ws.localBook[market]["nonce"] + 1:
-                # I think I've fixed this, by looking at the other Bitvavo repos (search for 'nonce' or '!=' 😆)
-                ws.subscriptionBook(market, ws.callbacks[market])
-                return
-            ws.localBook[market]["bids"] = sortAndInsert(ws.localBook[market]["bids"], message["bids"], bidsCompare)
-            ws.localBook[market]["asks"] = sortAndInsert(ws.localBook[market]["asks"], message["asks"], asksCompare)
-            ws.localBook[market]["nonce"] = message["nonce"]
+        if message["nonce"] != ws.localBook[market]["nonce"] + 1:
+            # I think I've fixed this, by looking at the other Bitvavo repos (search for 'nonce' or '!=' 😆)
+            ws.subscriptionBook(market, ws.callbacks[market])
+            return
+        ws.localBook[market]["bids"] = sortAndInsert(ws.localBook[market]["bids"], message["bids"], bidsCompare)
+        ws.localBook[market]["asks"] = sortAndInsert(ws.localBook[market]["asks"], message["asks"], asksCompare)
+        ws.localBook[market]["nonce"] = message["nonce"]
 
     if market != "":
         ws.callbacks["subscriptionBookUser"][market](ws.localBook[market])
 
 
 class ReceiveThread(Thread):
-    def __init__(self, ws: WebSocketApp, ws_facade: Bitvavo.WebSocketAppFacade):
+    def __init__(self, ws: WebSocketApp, ws_facade: Bitvavo.WebSocketAppFacade) -> None:
         self.ws = ws
         self.ws_facade = ws_facade
         Thread.__init__(self)
@@ -120,9 +118,8 @@ class ReceiveThread(Thread):
                 self.ws_facade.authenticated = False
                 time.sleep(self.ws_facade.reconnectTimer)
                 if self.ws_facade.bitvavo.debugging:
-                    logger.debug(
-                        f"we have just set reconnect to true and have waited for {self.ws_facade.reconnectTimer}",
-                    )
+                    msg = f"we have just set reconnect to true and have waited for {self.ws_facade.reconnectTimer}"
+                    logger.debug(msg)
                 self.ws_facade.reconnectTimer = self.ws_facade.reconnectTimer * 2
         except KeyboardInterrupt:
             if self.ws_facade.bitvavo.debugging:
@@ -145,7 +142,8 @@ def callback_example(response: Any) -> None:
 
         HERE = Path.cwd()  # root of your project folder
         filepath = HERE / "your_output.json"
-        # a = append; figure out yourself to create multiple callback functions, probably one for each type of call that you want to make
+        # a = append; figure out yourself to create multiple callback functions, probably one for each type of call that
+        # you want to make
         with filepath.open("a") as file:
             file.write(json.dumps(response))
     elif isinstance(response, list):
@@ -189,7 +187,7 @@ def error_callback_example(msg: errordict) -> None:
         content=f"{msg}",
     ).execute()
     ```
-    """
+    """  # noqa: E501
     # easiest thing is to use the logger, but there's a good chance this message gets silently eaten.
     logger.error("error", msg=msg)
 
@@ -213,7 +211,9 @@ class Bitvavo:
     ```
     """
 
-    def __init__(self, options: dict[str, str | int] = {}):
+    def __init__(self, options: dict[str, str | int] | None = None) -> None:
+        if options is None:
+            options = {}
         _options = {k.upper(): v for k, v in options.items()}
         self.base: str = str(_options.get("RESTURL", "https://api.bitvavo.com/v2"))
         self.wsUrl: str = str(_options.get("WSURL", "wss://ws.bitvavo.com/v2/"))
@@ -222,7 +222,7 @@ class Bitvavo:
         self.APISECRET = str(_options.get("APISECRET", ""))
         self.rateLimitRemaining: int = 1000
         self.rateLimitResetAt: ms = 0
-        # TODO(NostraDavid) for v2: remove this functionality - logger.debug is a level that can be set
+        # TODO(NostraDavid): for v2: remove this functionality - logger.debug is a level that can be set
         self.debugging = bool(_options.get("DEBUGGING", False))
 
     def calcLag(self) -> ms:
@@ -266,24 +266,23 @@ class Bitvavo:
 
         If you're not banned, then use the received headers to update the variables.
         """
-        if "errorCode" in response:
-            if response["errorCode"] == 105:
-                self.rateLimitRemaining = 0
-                # rateLimitResetAt is a value that's stripped from a string.
-                # Kind of a terrible way to pass that information, but eh, whatever, I guess...
-                # Anyway, here is the string that's being pulled apart:
-                # "Your IP or API key has been banned for not respecting the rate limit. The ban expires at ${expiryInMs}""
-                self.rateLimitResetAt = ms(response["error"].split(" at ")[1].split(".")[0])
-                timeToWait = time_to_wait(self.rateLimitResetAt)
-                logger.warning(
-                    "banned",
-                    info={
-                        "wait_time_seconds": timeToWait + 1,
-                        "until": (dt.datetime.now() + dt.timedelta(seconds=timeToWait + 1)).isoformat(),
-                    },
-                )
-                logger.info("napping-until-ban-lifted")
-                time.sleep(timeToWait + 1)  # plus one second to ENSURE we're able to run again.
+        if "errorCode" in response and response["errorCode"] == 105:  # noqa: PLR2004
+            self.rateLimitRemaining = 0
+            # rateLimitResetAt is a value that's stripped from a string.
+            # Kind of a terrible way to pass that information, but eh, whatever, I guess...
+            # Anyway, here is the string that's being pulled apart:
+            # "Your IP or API key has been banned for not respecting the rate limit. The ban expires at ${expiryInMs}""
+            self.rateLimitResetAt = ms(response["error"].split(" at ")[1].split(".")[0])
+            timeToWait = time_to_wait(self.rateLimitResetAt)
+            logger.warning(
+                "banned",
+                info={
+                    "wait_time_seconds": timeToWait + 1,
+                    "until": (dt.datetime.now(tz=dt.timezone.utc) + dt.timedelta(seconds=timeToWait + 1)).isoformat(),
+                },
+            )
+            logger.info("napping-until-ban-lifted")
+            time.sleep(timeToWait + 1)  # plus one second to ENSURE we're able to run again.
         if "Bitvavo-Ratelimit-Remaining" in response:
             self.rateLimitRemaining = int(response["Bitvavo-Ratelimit-Remaining"])
         if "Bitvavo-Ratelimit-ResetAt" in response:
@@ -339,7 +338,7 @@ class Bitvavo:
             self.updateRateLimit(r.json())
         else:
             self.updateRateLimit(dict(r.headers))
-        return r.json()  # type:ignore
+        return r.json()  # type:ignore[no-any-return]
 
     def privateRequest(
         self,
@@ -413,8 +412,8 @@ class Bitvavo:
         logger.info(
             "napping-until-reset",
             napTime=napTime,
-            currentTime=dt.datetime.now().isoformat(),
-            targetDatetime=dt.datetime.fromtimestamp(self.rateLimitResetAt / 1000.0).isoformat(),
+            currentTime=dt.datetime.now(tz=dt.timezone.utc).isoformat(),
+            targetDatetime=dt.datetime.fromtimestamp(self.rateLimitResetAt / 1000.0, tz=dt.timezone.utc).isoformat(),
         )
         time.sleep(napTime + 1)  # +1 to add a tiny bit of buffer time
 
@@ -604,7 +603,8 @@ class Bitvavo:
         options={
             "limit": [ 1 .. 1000 ], default 500
             "start": int timestamp in ms >= 0
-            "end": int timestamp in ms <= 8_640_000_000_000_000 # (that's somewhere in the year 2243, or near the number 2^52)
+            # (that's somewhere in the year 2243, or near the number 2^52)
+            "end": int timestamp in ms <= 8_640_000_000_000_000
             "tradeIdFrom": ""  # if you get a list and want everything AFTER a certain id, put that id here
             "tradeIdTo": ""  # if you get a list and want everything BEFORE a certain id, put that id here
         }
@@ -964,15 +964,14 @@ class Bitvavo:
           "disableMarketProtection": true
         }
         ```
-        """
+        """  # noqa: E501
         body["market"] = market
         body["side"] = side
         body["orderType"] = orderType
         return self.privateRequest("/order", "", body, "POST")  # type: ignore[return-value]
 
     def updateOrder(self, market: str, orderId: str, body: anydict) -> anydict:
-        """Update an existing order for a specific market. Make sure that at least one of the optional parameters is set,
-        otherwise nothing will be updated.
+        """Update an existing order for a specific market. Make sure that at least one of the optional parameters is set, otherwise nothing will be updated.
 
         ---
         Args:
@@ -1049,7 +1048,7 @@ class Bitvavo:
           "disableMarketProtection": true
         }
         ```
-        """
+        """  # noqa: E501
         body["market"] = market
         body["orderId"] = orderId
         return self.privateRequest("/order", "", body, "PUT")  # type: ignore[return-value]
@@ -1214,7 +1213,7 @@ class Bitvavo:
           }
         ]
         ```
-        """
+        """  # noqa: E501
         options["market"] = market
         postfix = createPostfix(options)
         return self.privateRequest("/orders", postfix, {}, "GET", 5)  # type: ignore[return-value]
@@ -1359,7 +1358,7 @@ class Bitvavo:
           }
         ]
         ```
-        """
+        """  # noqa: E501
         options["market"] = market
         postfix = createPostfix(options)
         return self.privateRequest("/trades", postfix, {}, "GET", 5)  # type: ignore[return-value]
@@ -1500,7 +1499,7 @@ class Bitvavo:
           }
         ]
         ```
-        """
+        """  # noqa: E501
         postfix = createPostfix(options)
         return self.privateRequest("/depositHistory", postfix, {}, "GET", 5)  # type: ignore[return-value]
 
@@ -1535,7 +1534,7 @@ class Bitvavo:
           "amount": "1.5"
         }
         ```
-        """
+        """  # noqa: E501
         body["symbol"] = symbol
         body["amount"] = amount
         body["address"] = address
@@ -1577,7 +1576,7 @@ class Bitvavo:
           }
         }
         ```
-        """
+        """  # noqa: E501
         postfix = createPostfix(options)
         return self.privateRequest("/withdrawalHistory", postfix, {}, "GET", 5)  # type: ignore[return-value]
 
@@ -1598,7 +1597,7 @@ class Bitvavo:
             ACCESSWINDOW: int,
             WSURL: str,
             bitvavo: Bitvavo,
-        ):
+        ) -> None:
             self.APIKEY = APIKEY
             self.APISECRET = APISECRET
             self.ACCESSWINDOW = ACCESSWINDOW
@@ -1635,14 +1634,14 @@ class Bitvavo:
             self.keepAlive = False
             self.receiveThread.join()
 
-        def waitForSocket(self, ws: WebSocketApp, message: str, private: bool) -> None:
+        def waitForSocket(self, ws: WebSocketApp, message: str, private: bool) -> None:  # noqa: ARG002, FBT001
             while True:
                 if (not private and self.open) or (private and self.authenticated and self.open):
                     return
                 time.sleep(0.1)
 
-        def doSend(self, ws: WebSocketApp, message: str, private: bool = False) -> None:
-            # TODO(NostraDavid) add nap-time to the websocket, or do it here; I don't know yet.
+        def doSend(self, ws: WebSocketApp, message: str, private: bool = False) -> None:  # noqa: FBT001, FBT002
+            # TODO(NostraDavid): add nap-time to the websocket, or do it here; I don't know yet.
             if private and self.APIKEY == "":
                 logger.error(
                     "no-apikey",
@@ -1654,14 +1653,14 @@ class Bitvavo:
             if self.bitvavo.debugging:
                 logger.debug("message-sent", message=message)
 
-        def on_message(self, ws: Any, msg: str) -> None:  # noqa: C901 (too-complex)
+        def on_message(self, ws: Any, msg: str) -> None:  # noqa: C901, PLR0912, PLR0915, ARG002 (too-complex)
             if self.bitvavo.debugging:
                 logger.debug("message-received", message=msg)
             msg_dict: anydict = json.loads(msg)
             callbacks = self.callbacks
 
             if "error" in msg_dict:
-                if msg_dict["errorCode"] == 105:
+                if msg_dict["errorCode"] == 105:  # noqa: PLR2004
                     self.bitvavo.updateRateLimit(msg_dict)
                 if "error" in callbacks:
                     callbacks["error"](msg_dict)
@@ -1717,17 +1716,13 @@ class Bitvavo:
                     market = msg_dict["response"]["market"]
                     if "book" in callbacks:
                         callbacks["book"](msg_dict["response"])
-                    if self.keepBookCopy:
-                        if market in callbacks["subscriptionBook"]:
-                            callbacks["subscriptionBook"][market](self, msg_dict)
+                    if self.keepBookCopy and market in callbacks["subscriptionBook"]:
+                        callbacks["subscriptionBook"][market](self, msg_dict)
 
             elif "event" in msg_dict:
                 if msg_dict["event"] == "authenticate":
                     self.authenticated = True
-                elif msg_dict["event"] == "fill":
-                    market = msg_dict["market"]
-                    callbacks["subscriptionAccount"][market](msg_dict)
-                elif msg_dict["event"] == "order":
+                elif msg_dict["event"] == "fill" or msg_dict["event"] == "order":
                     market = msg_dict["market"]
                     callbacks["subscriptionAccount"][market](msg_dict)
                 elif msg_dict["event"] == "ticker":
@@ -1742,29 +1737,27 @@ class Bitvavo:
                     callbacks["subscriptionCandles"][market][interval](msg_dict)
                 elif msg_dict["event"] == "book":
                     market = msg_dict["market"]
-                    if "subscriptionBookUpdate" in callbacks:
-                        if market in callbacks["subscriptionBookUpdate"]:
-                            callbacks["subscriptionBookUpdate"][market](msg_dict)
-                    if self.keepBookCopy:
-                        if market in callbacks["subscriptionBook"]:
-                            callbacks["subscriptionBook"][market](self, msg_dict)
+                    if "subscriptionBookUpdate" in callbacks and market in callbacks["subscriptionBookUpdate"]:
+                        callbacks["subscriptionBookUpdate"][market](msg_dict)
+                    if self.keepBookCopy and market in callbacks["subscriptionBook"]:
+                        callbacks["subscriptionBook"][market](self, msg_dict)
                 elif msg_dict["event"] == "trade":
                     market = msg_dict["market"]
                     if "subscriptionTrades" in callbacks:
                         callbacks["subscriptionTrades"][market](msg_dict)
 
-        def on_error(self, ws: Any, error: Any) -> None:
+        def on_error(self, ws: Any, error: Any) -> None:  # noqa: ARG002
             if "error" in self.callbacks:
                 self.callbacks["error"](error)
             else:
                 logger.error(error)
 
-        def on_close(self, ws: Any) -> None:
+        def on_close(self, ws: Any) -> None:  # noqa: ARG002
             self.receiveThread.stop()
             if self.bitvavo.debugging:
                 logger.debug("websocket-closed")
 
-        def checkReconnect(self) -> None:  # noqa: C901 (too-complex)
+        def checkReconnect(self) -> None:  # noqa: C901, PLR0912 (too-complex)
             if "subscriptionTicker" in self.callbacks:
                 for market in self.callbacks["subscriptionTicker"]:
                     self.subscriptionTicker(market, self.callbacks["subscriptionTicker"][market])
@@ -1792,7 +1785,7 @@ class Bitvavo:
                 for market in self.callbacks["subscriptionBookUser"]:
                     self.subscriptionBook(market, self.callbacks["subscriptionBookUser"][market])
 
-        def on_open(self, ws: Any) -> None:
+        def on_open(self, ws: Any) -> None:  # noqa: ARG002
             now = time_ms() + BITVAVO_API_UPGRADED.LAG
             self.open = True
             self.reconnectTimer = 0.5
@@ -2043,7 +2036,7 @@ class Bitvavo:
               }
             ]
             ```
-            """
+            """  # noqa: E501
             self.callbacks["publicTrades"] = callback
             options["market"] = market
             options["action"] = "getTrades"
@@ -2196,7 +2189,7 @@ class Bitvavo:
                 # and another 215 markets below this point
             ]
             ```
-            """
+            """  # noqa: E501
             self.callbacks["tickerBook"] = callback
             options["action"] = "getTickerBook"
             self.doSend(self.ws, json.dumps(options))
@@ -2395,7 +2388,7 @@ class Bitvavo:
               "disableMarketProtection": true
             }
             ```
-            """
+            """  # noqa: E501
             self.callbacks["placeOrder"] = callback
             body["market"] = market
             body["side"] = side
@@ -2410,8 +2403,9 @@ class Bitvavo:
             body: anydict,
             callback: Callable[[Any], None],
         ) -> None:
-            """Update an existing order for a specific market. Make sure that at least one of the optional parameters is set,
-            otherwise nothing will be updated.
+            """
+            Update an existing order for a specific market. Make sure that at least one of the optional parameters
+            is set, otherwise nothing will be updated.
 
             ---
             Args:
@@ -2489,7 +2483,7 @@ class Bitvavo:
               "disableMarketProtection": true
             }
             ```
-            """
+            """  # noqa: E501
             self.callbacks["updateOrder"] = callback
             body["market"] = market
             body["orderId"] = orderId
@@ -2608,9 +2602,12 @@ class Bitvavo:
             options={
                 "limit": [ 1 .. 1000 ], default 500
                 "start": int timestamp in ms >= 0
-                "end": int timestamp in ms <= 8_640_000_000_000_000 # (that's somewhere in the year 2243, or near the number 2^52)
-                "tradeIdFrom": ""  # if you get a list and want everything AFTER a certain id, put that id here
-                "tradeIdTo": ""  # if you get a list and want everything BEFORE a certain id, put that id here
+                # (that's somewhere in the year 2243, or near the number 2^52)
+                "end": int timestamp in ms <= 8_640_000_000_000_000
+                # if you get a list and want everything AFTER a certain id, put that id here
+                "tradeIdFrom": ""
+                # if you get a list and want everything BEFORE a certain id, put that id here
+                "tradeIdTo": ""
             }
             callback=callback_example
             ```
@@ -2785,7 +2782,8 @@ class Bitvavo:
             options={
                 "limit": [ 1 .. 1000 ], default 500
                 "start": int timestamp in ms >= 0
-                "end": int timestamp in ms <= 8_640_000_000_000_000 # (that's somewhere in the year 2243, or near the number 2^52)
+                # (that's somewhere in the year 2243, or near the number 2^52)
+                "end": int timestamp in ms <= 8_640_000_000_000_000
                 "tradeIdFrom": ""  # if you get a list and want everything AFTER a certain id, put that id here
                 "tradeIdTo": ""  # if you get a list and want everything BEFORE a certain id, put that id here
             }
@@ -2887,7 +2885,9 @@ class Bitvavo:
             self.doSend(self.ws, json.dumps(options), True)
 
         def depositAssets(self, symbol: str, callback: Callable[[Any], None]) -> None:
-            """Get the deposit address (with paymentId for some assets) or bank account information to increase your balance
+            """
+            Get the deposit address (with paymentId for some assets) or bank account information to increase your
+            balance.
 
             ---
             Args:
@@ -2938,7 +2938,8 @@ class Bitvavo:
                 "symbol":"EUR"
                 "limit": [ 1 .. 1000 ], default 500
                 "start": int timestamp in ms >= 0
-                "end": int timestamp in ms <= 8_640_000_000_000_000 # (that's somewhere in the year 2243, or near the number 2^52)
+                # (that's somewhere in the year 2243, or near the number 2^52)
+                "end": int timestamp in ms <= 8_640_000_000_000_000
             }
             callback=callback_example
             ```
@@ -2996,9 +2997,15 @@ class Bitvavo:
             amount=10
             address="BitcoinAddress",  # Wallet address or IBAN
             options={
-              "paymentId": "10002653",  # For digital assets only. Should be set when withdrawing straight to another exchange or merchants that require payment id's.
-              "internal": false,  # For digital assets only. Should be set to true if the withdrawal must be sent to another Bitvavo user internally
-              "addWithdrawalFee": false  # If set to true, the fee will be added on top of the requested amount, otherwise the fee is part of the requested amount and subtracted from the withdrawal.
+              # For digital assets only. Should be set when withdrawing straight to another exchange or merchants that
+              # require payment id's.
+              "paymentId": "10002653",
+              # For digital assets only. Should be set to true if the withdrawal must be sent to another Bitvavo user
+              # internally
+              "internal": false,
+              # If set to true, the fee will be added on top of the requested amount, otherwise the fee is part of the
+              # requested amount and subtracted from the withdrawal.
+              "addWithdrawalFee": false
             }
             callback=callback_example
             ```
@@ -3036,7 +3043,8 @@ class Bitvavo:
                 "symbol":"SHIB"
                 "limit": [ 1 .. 1000 ], default 500
                 "start": int timestamp in ms >= 0
-                "end": int timestamp in ms <= 8_640_000_000_000_000 # (that's somewhere in the year 2243, or near the number 2^52)
+                # (that's somewhere in the year 2243, or near the number 2^52)
+                "end": int timestamp in ms <= 8_640_000_000_000_000
             }
             callback=callback_example
             ```
@@ -3069,8 +3077,11 @@ class Bitvavo:
             self.doSend(self.ws, json.dumps(options), True)
 
         def subscriptionTicker(self, market: str, callback: Callable[[Any], None]) -> None:
-            # TODO(NostraDavid) one possible improvement here is to turn `market` into a list of markets, so we can sub to all of them at once. Same goes for other `subscription*()`
-            """Subscribe to the ticker channel, which means `callback` gets passed the new best bid or ask whenever they change (server-side).
+            # TODO(NostraDavid): one possible improvement here is to turn `market` into a list of markets, so we can sub
+            # to all of them at once. Same goes for other `subscription*()`
+            """
+            Subscribe to the ticker channel, which means `callback` gets passed the new best bid or ask whenever they
+            change (server-side).
 
 
             ---
@@ -3118,7 +3129,9 @@ class Bitvavo:
             )
 
         def subscriptionTicker24h(self, market: str, callback: Callable[[Any], None]) -> None:
-            """Subscribe to the ticker-24-hour channel, which means `callback` gets passed the new object every second, if values have changed.
+            """
+            Subscribe to the ticker-24-hour channel, which means `callback` gets passed the new object every second, if
+            values have changed.
 
             ---
             Args:
@@ -3173,8 +3186,9 @@ class Bitvavo:
             )
 
         def subscriptionAccount(self, market: str, callback: Callable[[Any], None]) -> None:
-            """Subscribes to the account channel, which sends an update whenever an event happens which is related to the account.
-            These are 'order' events (create, update, cancel) or 'fill' events (a trade occurred).
+            """
+            Subscribes to the account channel, which sends an update whenever an event happens which is related to
+            the account. These are 'order' events (create, update, cancel) or 'fill' events (a trade occurred).
 
             ---
             Args:

@@ -2,15 +2,19 @@
 Some helper functions that should make my life a lot easier
 """
 
-from collections.abc import Callable
 from logging.config import dictConfig
 from time import time
+from typing import TYPE_CHECKING
 
 import structlog
-from structlog.types import EventDict, WrappedLogger
 
 from bitvavo_api_upgraded.settings import BITVAVO_API_UPGRADED
 from bitvavo_api_upgraded.type_aliases import ms, s_f
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from structlog.types import EventDict, WrappedLogger
 
 
 def time_ms() -> ms:
@@ -22,8 +26,7 @@ def time_to_wait(rateLimitResetAt: ms) -> s_f:
     if curr_time > rateLimitResetAt:
         # rateLimitRemaining has already reset
         return 0.0
-    else:
-        return abs(s_f((rateLimitResetAt - curr_time) / 1000))
+    return abs(s_f((rateLimitResetAt - curr_time) / 1000))
 
 
 def configure_loggers() -> None:
