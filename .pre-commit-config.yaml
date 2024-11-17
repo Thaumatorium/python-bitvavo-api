@@ -1,21 +1,32 @@
 ---
 repos:
   # update the rev versions with a `pre-commit autoupdate`
-    - repo: https://github.com/astral-sh/ruff-pre-commit
-      rev: v0.7.3
-      hooks:
-          - id: ruff # Run the linter.
-          - id: ruff-format # Run the formatter.
-    - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
-      rev: 0.2.3
-      hooks:
-          - id: yamlfmt
-    - repo: https://github.com/adrienverge/yamllint
-      rev: v1.35.1
-      hooks:
-          - id: yamllint
-            name: yamllint
-            description: This hook runs yamllint.
-            entry: yamllint
-            language: python
-            types: [file, yaml]
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.7.3
+    hooks:
+      - id: ruff  # Run the linter.
+      - id: ruff-format  # Run the formatter.
+  - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
+    rev: 0.2.3
+    hooks:
+      - id: yamlfmt
+        args:
+          - --mapping
+          - "2"
+          - --sequence
+          - "4"
+          - --offset
+          - "2"
+          - --width
+          - "120"
+          - --preserve-quotes
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        args: [--format, parsable]
+        name: yamllint
+        description: This hook runs yamllint.
+        entry: yamllint
+        language: python
+        types: [file, yaml]
