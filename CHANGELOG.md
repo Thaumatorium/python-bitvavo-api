@@ -1,6 +1,6 @@
 # Changelog
 
-## $UNRELEASED
+## v1.16.0 - 2024-11-18
 
 Quite a few changes, most aimed at the maintenance of this project, but all changes are superficial - the functional
 code has not changed.
