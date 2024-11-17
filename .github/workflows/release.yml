@@ -1,0 +1,30 @@
+---
+name: Publish to PyPI and TestPyPI
+on:
+  push:
+    branches:
+      - master
+jobs:
+  build-n-publish:
+    name: Publish to PyPI and TestPyPI
+    runs-on: ubuntu-24.04
+    environment:
+      name: release
+    permissions:
+      # For PyPI's trusted publishing.
+      id-token: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+      - name: Build Wheel
+        run: uv build
+      - name: Publish Release on GitHub
+        uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-*
+          path: wheels
+          merge-multiple: true
+      - name: Publish to PyPI
+        run: uv publish --verbose dist/*

@@ -81,12 +81,18 @@ tag_message = "[VERSIONBUMP][{now:%Y-%m-%d}]: {current_version} -> {new_version}
 allow_dirty = false
 commit = true
 message = "[VERSIONBUMP][{now:%Y-%m-%d}]: {current_version} -> {new_version}"
-commit_args = ""
+commit_args = "--no-verify"
 setup_hooks = []
 pre_commit_hooks = []
 post_commit_hooks = []
 
-[tool.bump-my-version.file-settings."CHANGELOG.md"]
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+search = 'version = "{current_version}"'
+replace = 'version = "{new_version}"'
+
+[[tool.bumpversion.files]]
+filename = "CHANGELOG.md"
 search = "$UNRELEASED"
 replace = "v{new_version} - {now:%Y-%m-%d}"
 
