@@ -1,6 +1,6 @@
 # Changelog
 
-## $UNRELEASED
+## v1.17.0 - 2024-11-24
 
 Integrate all changes from Bitvavo's `v1.1.1` to `v1.4.2` lib versions,
 basically catching up their changes with our code. The reason for choosing
