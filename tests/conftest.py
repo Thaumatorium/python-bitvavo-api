@@ -60,7 +60,17 @@ def wrap_public_request(monkeypatch: pytest.MonkeyPatch, bitvavo: Bitvavo) -> No
     that are not in use anymore - I can remove them.
     """
     # Market exceptions to remove, as of 2024-11-11
-    market_exceptions = ["BABYDOGE-EUR", "PEAQ-EUR", "UXLINK-EUR", "KLAY-EUR", "ORN-EUR", "DEGEN-EUR"]
+    market_exceptions = [
+        "BABYDOGE-EUR",
+        "PEAQ-EUR",
+        "UXLINK-EUR",
+        "KLAY-EUR",
+        "ORN-EUR",
+        "DEGEN-EUR",
+        "EUROC-USDC",
+        "PNUT-EUR",
+        "SYS-EUR",
+    ]
     original_public_request = bitvavo.publicRequest
 
     def wrapped_public_request(*args: Any, **kwargs: Any) -> Any:

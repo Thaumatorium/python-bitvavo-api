@@ -231,9 +231,7 @@ verbosity = 0
 # PROGRAM SETTINGS
 [tool.coverage.run]
 branch = true
-source = [
-    "bitvavo_api_upgraded",
-] # I don't know why this shouldn't be "src/bitvavo_api_upgraded", but that value doesn't work...
+source = ["bitvavo_api_upgraded"]
 parallel = true
 relative_files = true
 
@@ -244,12 +242,16 @@ source = [
 ]
 
 [tool.coverage.report]
-# fail_under = 100
+fail_under = 50
 precision = 0
-# show_missing = True
+show_missing = true
 skip_covered = true
 skip_empty = true
 sort = "Cover"
+exclude_lines = [
+    "pragma: no cover",           # Common usage for excluding lines from coverage
+    "if __name__ == .__main__.:", # Skip lines commonly used in scripts
+]
 
 [tool.black]
 line-length = 120
@@ -261,7 +263,16 @@ profile = "black"
 src_paths = ["src", "tests"]
 
 [tool.pytest.ini_options]
-addopts = "--durations-min=1 --verbosity=2 --no-header --show-capture=all"
+addopts = """
+    --cov=bitvavo_api_upgraded
+    --cov-branch
+    --cov-report=term
+    --cov-report=html
+    --durations-min=1
+    --verbosity=2
+    --no-header
+    --show-capture=all
+"""
 # addopts = "--durations-min=1 --stepwise --verbosity=2 --no-header --show-capture=all"
 # addopts = "--durations=10 --durations-min=1 --stepwise --verbosity=1 --no-header"
 testpaths = ["tests"]

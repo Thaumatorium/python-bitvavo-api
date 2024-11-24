@@ -34,7 +34,7 @@ def configure_loggers() -> None:
     source: https://docs.python.org/3.9/library/logging.config.html#dictionary-schema-details
     """
     shared_pre_chain: list[Callable[[WrappedLogger, str, EventDict], EventDict]] = [
-        structlog.threadlocal.merge_threadlocal,
+        # structlog.threadlocal.merge_threadlocal,
         structlog.stdlib.add_logger_name,  # show which named logger made the message!
         structlog.processors.add_log_level,  # info, warning, error, etc
         structlog.processors.TimeStamper(fmt="%Y-%m-%dT%H:%M:%S", utc=False),  # add an ISO formatted string

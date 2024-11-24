@@ -98,7 +98,7 @@ class TestBitvavo:
 
         101: Unknown error. Operation may or may not have succeeded.
         102: Invalid JSON.
-        103: You have been rate limited. Please observe the Bitvavo-Ratelimit-AllowAt header to see when you can send requests again. Failure to respect self limit will result in an IP ban. The default value is 1000 weighted requests per minute. Please contact support if you wish to increase self limit.
+        103: You have been rate limited. Please observe the bitvavo-ratelimit-resetat header to see when you can send requests again. Failure to respect self limit will result in an IP ban. The default value is 1000 weighted requests per minute. Please contact support if you wish to increase self limit.
         104: You have been rate limited by the number of new orders. The default value is 100 new orders per second or 100.000 new orders per day. Please update existing orders instead of cancelling and creating orders. Please contact support if you wish to increase self limit.
         105: Your IP or API key has been banned for not respecting the rate limit. The ban expires at ${expiryInMs}.
         107: The matching engine is overloaded. Please wait 500ms and resubmit your order.
@@ -130,9 +130,9 @@ class TestBitvavo:
         240: {"errorCode":240,"error":"No order found. Please be aware that simultaneously updating the same order may return self error."}
         300: Authentication is required for self endpoint.
         301: {"errorCode":301,"error":"API Key must be of length 64."}
-        302: Timestamp is invalid. This must be a timestamp in ms. See Bitvavo-Access-Timestamp header or timestamp parameter for websocket.
+        302: Timestamp is invalid. This must be a timestamp in ms. See bitvavo-access-timestamp header or timestamp parameter for websocket.
         303: Window must be between 100 and 60000 ms.
-        304: Request was not received within acceptable window(default 30s, or custom with Bitvavo-Access-Window header) of Bitvavo-Access-Timestamp header(or timestamp parameter for websocket).
+        304: Request was not received within acceptable window(default 30s, or custom with bitvavo-access-window header) of bitvavo-access-timestamp header(or timestamp parameter for websocket).
         304: Authentication is required for self endpoint.
         305: {"errorCode":305,"error":"No active API key found."}
         306: No active API key found. Please ensure that you have confirmed the API key by e-mail.
@@ -854,6 +854,66 @@ class TestBitvavo:
             "withdrawFiat",
         ]
 
+    def test_fees(self, bitvavo: Bitvavo) -> None:
+        response = bitvavo.fees()
+
+        assert isinstance(response, dict)
+
+        assert len(response) == 4
+        assert "tier" in response
+        assert "volume" in response
+        assert "maker" in response
+        assert "taker" in response
+
+        assert isinstance(response["tier"], int)
+        assert isinstance(response["volume"], str)
+        assert isinstance(response["maker"], str)
+        assert isinstance(response["taker"], str)
+
+        assert float(response["volume"]) >= 0
+        assert float(response["maker"]) >= 0
+        assert float(response["taker"]) >= 0
+
+    def test_fees_with_market(self, bitvavo: Bitvavo) -> None:
+        response = bitvavo.fees(market="BTC-EUR")
+
+        assert isinstance(response, dict)
+
+        assert len(response) == 4
+        assert "tier" in response
+        assert "volume" in response
+        assert "maker" in response
+        assert "taker" in response
+
+        assert isinstance(response["tier"], int)
+        assert isinstance(response["volume"], str)
+        assert isinstance(response["maker"], str)
+        assert isinstance(response["taker"], str)
+
+        assert float(response["volume"]) >= 0
+        assert float(response["maker"]) >= 0
+        assert float(response["taker"]) >= 0
+
+    def test_fees_with_quote(self, bitvavo: Bitvavo) -> None:
+        response = bitvavo.fees(quote="EUR")
+
+        assert isinstance(response, dict)
+
+        assert len(response) == 4
+        assert "tier" in response
+        assert "volume" in response
+        assert "maker" in response
+        assert "taker" in response
+
+        assert isinstance(response["tier"], int)
+        assert isinstance(response["volume"], str)
+        assert isinstance(response["maker"], str)
+        assert isinstance(response["taker"], str)
+
+        assert float(response["volume"]) >= 0
+        assert float(response["maker"]) >= 0
+        assert float(response["taker"]) >= 0
+
     def test_balance_all(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.balance(options={})
 
@@ -1092,7 +1152,7 @@ class TestBitvavo:
             ]  # TODO(NostraDavid): expand this list, if possible
 
 
-# Normally you would define a seperate callback for every function.
+# Normally you would define a separate callback for every function.
 def generic_callback(response: Any | errordict) -> None:
     """The `Any` type is when the server successfully returns data.
 
@@ -1293,7 +1353,7 @@ class TestWebsocket:
             callback=generic_callback,
         )
 
-    @pytest.mark.skip(reason="properly broken?")
+    # @pytest.mark.skip(reason="properly broken?")
     def test_get_order(
         self,
         caplog: pytest.LogCaptureFixture,

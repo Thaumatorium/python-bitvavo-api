@@ -1,11 +1,12 @@
 /*
 
 # dirs
-!.github
-!requirements
-!scripts
-!src
-!tests
+!.github/
+!requirements/
+!scripts/
+!src/
+!tests/
+!docs/
 
 # files
 !.bumpversion.cfg

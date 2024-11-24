@@ -1,9 +1,53 @@
 # Changelog
 
+## $UNRELEASED
+
+Integrate all changes from Bitvavo's `v1.1.1` to `v1.4.2` lib versions,
+basically catching up their changes with our code. The reason for choosing
+`v1.1.1` as starting point, is because I'm not sure if I missed anything,
+because if I follow the timeline on PyPI is that I should pick `v1.2.2`, but if
+I look at my commit history, I should choose an older point. Oh well, it's only
+a little bit more work.
+
+I used [this Github
+link](https://github.com/bitvavo/python-bitvavo-api/compare/v1.1.1...v1.4.2) to
+compare their versions.
+
+### Added
+
+- `fees()` call. This was added to the Python SDK in early 2024.
+- `_default(value, fallback)` function, which ensures a `fallback` is returned,
+  if `value` is `None`. This ensures sane values will always be available.
+- `strintdict` type, as I had a bunch of `dict` types copied.
+
+### Changed
+
+- you can now do `from bitvavo_api_upgraded import Bitvavo`, instead of `from
+  bitvavo_api_upgraded.bitvavo import Bitvavo`, which always felt annoying. You
+  can still use the old way; no worries.
+- lowercased the http headers like `Bitvavo-Ratelimit-Remaining`, because
+  Bitvavo updated the API, which broke this code. This should probably fix the
+  issues of older versions of this lib going over the rate limit. 😅
+- `LICENSE.txt`'s year got updated
+- in `README.md`, below my text, I've replaced their old README with their
+  current one.
+- fixed coverage report; I switched to `pytest-cov`, from `coverage.py`
+  eventhough `pytest-cov` still uses `coverage.py`, but the output was messed up
+  (it also covered `tests/`, wich was unintentional)
+
+### Unchanged
+
+Normally I don't add this chapter, but I'm moving changes from Bitvavo's repo to
+here, so it's good I'll track this stuff for later.
+
+- I did NOT add the `name` var to `__init__.py`, because I'm pretty sure they
+  added it for their build process, but since I'm using `uv` I don't need that.
+- Did not add `self.timeout`, as I use `self.ACCESSWINDOW / 1000` instead.
+
 ## v1.16.0 - 2024-11-18
 
-Quite a few changes, most aimed at the maintenance of this project, but all changes are superficial - the functional
-code has not changed.
+Quite a few changes, most aimed at the maintenance of this project, but all
+changes are superficial - the functional code has not changed.
 
 ### Added
 
