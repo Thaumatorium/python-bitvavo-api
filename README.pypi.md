@@ -41,6 +41,10 @@ some handy settings there.
 Here is an example list of the settings for this lib:
 
 ```ini
+# needed for the private part of the API
+BITVAVO_APIKEY=
+BITVAVO_APISECRET=
+
 BITVAVO_API_UPGRADED_LOG_LEVEL=INFO  # Set the lib's log level
 BITVAVO_API_UPGRADED_LOG_EXTERNAL_LEVEL=WARNING  # Set the libs that are used by *this* lib's log level
 BITVAVO_API_UPGRADED_LAG=50  # the time difference between the server and your local time (you'll have to calculate this yourself - tip: use the bitvavo.time() functionality in a separate script)
