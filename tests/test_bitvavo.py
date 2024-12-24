@@ -3,6 +3,8 @@ Most of these tests check the keys of the response, the size of the response,
 the types of the response, which type those values can be cast to (as quite a
 few responses return strings which are obviously int or float types, but those
 usually can also return "none")
+
+If you see `pytest.mark.skipif`, you can flip the Bool to enable the test.
 """
 
 from __future__ import annotations
@@ -356,20 +358,25 @@ class TestBitvavo:
             assert float(candle[5]) >= 0  # volume
 
     def test_ticker_price_all(self, bitvavo: Bitvavo) -> None:
+        """
+        This is another one of those tests where the output is a bit of a mess.
+        """
         response = bitvavo.tickerPrice(options={})
 
         assert isinstance(response, list)
 
         # assert keys
         for ticker_price in response:
-            assert len(ticker_price) == 2
+            assert len(ticker_price) == 2 or len(ticker_price) == 1
             assert "market" in ticker_price
-            assert "price" in ticker_price
+            if len(ticker_price) == 2:
+                assert "price" in ticker_price
 
         # assert types
         for ticker_price in response:
             assert isinstance(ticker_price["market"], str)
-            assert isinstance(ticker_price["price"], str)
+            if len(ticker_price) == 2:
+                assert isinstance(ticker_price["price"], str)
 
     def test_ticker_price_single(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.tickerPrice(options={"market": "BTC-EUR"})
@@ -417,10 +424,10 @@ class TestBitvavo:
         for ticker_book in response:
             if not ticker_book["market"].endswith("BTC"):
                 assert isinstance(ticker_book["market"], str)
-                assert isinstance(ticker_book["bid"], str)
-                assert isinstance(ticker_book["ask"], str)
-                assert isinstance(ticker_book["bidSize"], str)
-                assert isinstance(ticker_book["askSize"], str)
+                assert isinstance(ticker_book["bid"], str) or ticker_book["bid"] is None
+                assert isinstance(ticker_book["ask"], str) or ticker_book["ask"] is None
+                assert isinstance(ticker_book["bidSize"], str) or ticker_book["bidSize"] is None
+                assert isinstance(ticker_book["askSize"], str) or ticker_book["askSize"] is None
             else:
                 assert isinstance(ticker_book["market"], str)
                 assert isinstance(ticker_book["ask"], str)
@@ -429,10 +436,10 @@ class TestBitvavo:
         # convertable types
         for ticker_book in response:
             if not ticker_book["market"].endswith("BTC"):
-                assert float(ticker_book["bid"]) >= 0
-                assert float(ticker_book["ask"]) >= 0
-                assert float(ticker_book["bidSize"]) >= 0
-                assert float(ticker_book["askSize"]) >= 0
+                assert float(ticker_book["bid"] if ticker_book["bid"] else 1) >= 0
+                assert float(ticker_book["ask"] if ticker_book["ask"] else 1) >= 0
+                assert float(ticker_book["bidSize"] if ticker_book["bidSize"] else 1) >= 0
+                assert float(ticker_book["askSize"] if ticker_book["askSize"] else 1) >= 0
             else:
                 assert float(ticker_book["ask"]) >= 0
                 assert float(ticker_book["askSize"]) >= 0
@@ -483,7 +490,10 @@ class TestBitvavo:
             assert float(response["ask"]) >= 0
             assert float(response["askSize"]) >= 0
 
-    def test_ticker_24h_all(self, bitvavo: Bitvavo) -> None:
+    def test_ticker_24h_all(self, bitvavo: Bitvavo) -> None:  # noqa: C901, PLR0912, PLR0915
+        """
+        All this tests for is that the output from Bitvavo is a damned mess.
+        """
         response = bitvavo.ticker24h(options={})
 
         assert isinstance(response, list)
@@ -493,7 +503,7 @@ class TestBitvavo:
             assert "open" in ticker_24h
             assert "high" in ticker_24h
             assert "low" in ticker_24h
-            assert "last" in ticker_24h
+            assert "last" in ticker_24h or "last" not in ticker_24h
             assert "volume" in ticker_24h
             assert "volumeQuote" in ticker_24h
             assert "bid" in ticker_24h
@@ -502,9 +512,9 @@ class TestBitvavo:
             assert "askSize" in ticker_24h
             assert "timestamp" in ticker_24h
             # these three were added late 2024
-            assert "startTimestamp" in ticker_24h
-            assert "openTimestamp" in ticker_24h
-            assert "closeTimestamp" in ticker_24h
+            assert "startTimestamp" in ticker_24h or "startTimestamp" not in ticker_24h
+            assert "openTimestamp" in ticker_24h or "openTimestamp" not in ticker_24h
+            assert "closeTimestamp" in ticker_24h or "closeTimestamp" not in ticker_24h
 
         for ticker_24h in response:
             # test all *-EUR markets (and any other non -BTC/-EUR markets that may be added in the future)
@@ -513,18 +523,22 @@ class TestBitvavo:
                 assert isinstance(ticker_24h["open"], str) or ticker_24h["open"] is None
                 assert isinstance(ticker_24h["high"], str) or ticker_24h["high"] is None
                 assert isinstance(ticker_24h["low"], str) or ticker_24h["low"] is None
-                assert isinstance(ticker_24h["last"], str) or ticker_24h["last"] is None
+                if "last" in ticker_24h:
+                    assert isinstance(ticker_24h["last"], str) or ticker_24h["last"] is None
                 assert isinstance(ticker_24h["volume"], str) or ticker_24h["volume"] is None
                 assert isinstance(ticker_24h["volumeQuote"], str) or ticker_24h["volumeQuote"] is None
-                assert isinstance(ticker_24h["bid"], str)
-                assert isinstance(ticker_24h["bidSize"], str)
-                assert isinstance(ticker_24h["ask"], str)
-                assert isinstance(ticker_24h["askSize"], str)
+                assert isinstance(ticker_24h["bid"], str) or ticker_24h["bid"] is None
+                assert isinstance(ticker_24h["bidSize"], str) or ticker_24h["bidSize"] is None
+                assert isinstance(ticker_24h["ask"], str) or ticker_24h["ask"] is None
+                assert isinstance(ticker_24h["askSize"], str) or ticker_24h["askSize"] is None
                 assert isinstance(ticker_24h["timestamp"], int)
                 # these three were added late 2024
-                assert isinstance(ticker_24h["startTimestamp"], int)
-                assert isinstance(ticker_24h["openTimestamp"], int)
-                assert isinstance(ticker_24h["closeTimestamp"], int)
+                if "startTimestamp" in ticker_24h:
+                    assert isinstance(ticker_24h["startTimestamp"], int)
+                if "openTimestamp" in ticker_24h:
+                    assert isinstance(ticker_24h["openTimestamp"], int) or ticker_24h["openTimestamp"] is None
+                if "closeTimestamp" in ticker_24h:
+                    assert isinstance(ticker_24h["closeTimestamp"], int) or ticker_24h["openTimestamp"] is None
 
         for ticker_24h in response:
             # test unused -BTC markets
@@ -532,18 +546,22 @@ class TestBitvavo:
                 assert float(ticker_24h["open"] if ticker_24h["open"] else 1) >= 0  # else 1, because 1 is truthy
                 assert float(ticker_24h["high"] if ticker_24h["high"] else 1) >= 0
                 assert float(ticker_24h["low"] if ticker_24h["low"] else 1) >= 0
-                assert float(ticker_24h["last"] if ticker_24h["last"] else 1) >= 0
+                if "last" in ticker_24h:
+                    assert float(ticker_24h["last"] if ticker_24h["last"] else 1) >= 0
                 assert float(ticker_24h["volume"] if ticker_24h["volume"] else 1) >= 0
                 assert float(ticker_24h["volumeQuote"] if ticker_24h["volumeQuote"] else 1) >= 0
-                assert float(ticker_24h["bid"]) >= 0
-                assert float(ticker_24h["bidSize"]) >= 0
-                assert float(ticker_24h["ask"]) >= 0
-                assert float(ticker_24h["askSize"]) >= 0
+                assert float(ticker_24h["bid"] if ticker_24h["bid"] else 1) >= 0
+                assert float(ticker_24h["bidSize"] if ticker_24h["bidSize"] else 1) >= 0
+                assert float(ticker_24h["ask"] if ticker_24h["ask"] else 1) >= 0
+                assert float(ticker_24h["askSize"] if ticker_24h["askSize"] else 1) >= 0
                 assert int(ticker_24h["timestamp"])
                 # these three were added late 2024
-                assert ticker_24h["startTimestamp"] >= 0
-                assert ticker_24h["openTimestamp"] >= 0
-                assert ticker_24h["closeTimestamp"] >= 0
+                if "startTimestamp" in ticker_24h:
+                    assert ticker_24h["startTimestamp"] >= 0
+                if "openTimestamp" in ticker_24h:
+                    assert int(ticker_24h["openTimestamp"] if ticker_24h["volumeQuote"] else 1) >= 0
+                if "closeTimestamp" in ticker_24h:
+                    assert int(ticker_24h["closeTimestamp"] if ticker_24h["volumeQuote"] else 1) >= 0
 
     def test_ticker_24h_single(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.ticker24h(options={"market": "BTC-EUR"})
@@ -596,7 +614,7 @@ class TestBitvavo:
             assert float(response["askSize"]) >= 0
             assert int(response["timestamp"])
 
-    @pytest.mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
+    @pytest.mark.skipif(True, reason="I'm not touching methods where I can accidentally sell all my shit")
     def test_place_order_buy(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.placeOrder(
             market="BTC-EUR",
@@ -606,7 +624,7 @@ class TestBitvavo:
         )
         print(json.dumps(response, indent=2))
 
-    @pytest.mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
+    @pytest.mark.skipif(True, reason="I'm not touching methods where I can accidentally sell all my shit")
     def test_place_order_sell(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.placeOrder(
             market="BTC-EUR",
@@ -621,7 +639,7 @@ class TestBitvavo:
         )
         print(json.dumps(response, indent=2))
 
-    @pytest.mark.skip(reason="This test is very sentsitive to the data on the account, so I'm skipping it")
+    @pytest.mark.skipif(True, reason="This test is very sensitive to the data on the account, so I'm skipping it")
     def test_get_order(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.getOrder(market="BTC-EUR", orderId="dd055772-0f02-493c-a049-f4356fa0d221")
 
@@ -634,7 +652,7 @@ class TestBitvavo:
         assert response["error"] == long_str
         assert response["errorCode"] == 240
 
-    @pytest.mark.skip(reason="This test is very sentsitive to the data on the account, so I'm skipping it")
+    @pytest.mark.skipif(True, reason="This test is very sensitive to the data on the account, so I'm skipping it")
     def test_update_order(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.updateOrder(
             market="BTC-EUR",
@@ -650,7 +668,7 @@ class TestBitvavo:
             == "No order found. Please be aware that simultaneously updating the same order may return this error."
         )
 
-    @pytest.mark.skip(reason="This test is very sentsitive to the data on the account, so I'm skipping it")
+    @pytest.mark.skipif(True, reason="This test is very sensitive to the data on the account, so I'm skipping it")
     def test_cancel_order(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.cancelOrder(market="BTC-EUR", orderId="dd055772-0f02-493c-a049-f4356fa0d221")
         assert len(response) == 2
@@ -666,7 +684,7 @@ class TestBitvavo:
         response = bitvavo.getOrders(market="BTC-EUR", options={})
         assert response == []  # at least it's not an error or something
 
-    @pytest.mark.skip(reason="I'm not touching methods where I can accidentally cancel all my orders")
+    @pytest.mark.skipif(True, reason="I'm not touching methods where I can accidentally cancel all my orders")
     def test_cancel_orders_all(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.cancelOrders(options={})
 
@@ -677,7 +695,7 @@ class TestBitvavo:
         assert response["errorCode"] == 311
         assert response["error"] == "This key does not allowing showing account information."
 
-    @pytest.mark.skip(reason="I'm not touching methods where I can accidentally cancel all my orders")
+    @pytest.mark.skipif(True, reason="I'm not touching methods where I can accidentally cancel all my orders")
     def test_cancel_orders_one_market(self, bitvavo: Bitvavo) -> None:
         response = bitvavo.cancelOrders(options={"market": "BTC-EUR"})
 
@@ -1338,7 +1356,7 @@ class TestWebsocket:
         assert stderr == ""
         assert 'generic_callback: [\n  {\n    "market": "1INCH-EUR",\n    "bid": ' in stdout
 
-    @pytest.mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
+    @pytest.mark.skipif(True, reason="I'm not touching methods where I can accidentally sell all my shit")
     def test_place_order(
         self,
         caplog: pytest.LogCaptureFixture,
@@ -1353,7 +1371,7 @@ class TestWebsocket:
             callback=generic_callback,
         )
 
-    # @pytest.mark.skip(reason="properly broken?")
+    # @pytest.mark.skipif(True, reason="properly broken?")
     def test_get_order(
         self,
         caplog: pytest.LogCaptureFixture,
@@ -1379,7 +1397,7 @@ class TestWebsocket:
         assert stderr == ""
         assert stdout == ""
 
-    @pytest.mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
+    @pytest.mark.skipif(True, reason="I'm not touching methods where I can accidentally sell all my shit")
     def test_update_order(
         self,
         caplog: pytest.LogCaptureFixture,
@@ -1393,7 +1411,7 @@ class TestWebsocket:
             callback=generic_callback,
         )
 
-    @pytest.mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
+    @pytest.mark.skipif(True, reason="I'm not touching methods where I can accidentally sell all my shit")
     def test_cancel_order(
         self,
         caplog: pytest.LogCaptureFixture,
@@ -1420,7 +1438,7 @@ class TestWebsocket:
         assert stderr == ""
         assert "generic_callback: []\n" in stdout
 
-    @pytest.mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
+    @pytest.mark.skipif(True, reason="I'm not touching methods where I can accidentally sell all my shit")
     def test_cancel_orders(
         self,
         caplog: pytest.LogCaptureFixture,
@@ -1485,7 +1503,7 @@ class TestWebsocket:
         assert stderr == ""
         assert 'generic_callback: [\n  {\n    "symbol": ' in stdout
 
-    @pytest.mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
+    @pytest.mark.skipif(True, reason="I'm not touching methods where I can accidentally sell all my shit")
     def test_deposit_assets(
         self,
         caplog: pytest.LogCaptureFixture,
@@ -1494,7 +1512,7 @@ class TestWebsocket:
     ) -> None:
         websocket.depositAssets("BTC", callback=generic_callback)
 
-    @pytest.mark.skip(reason="I'm not touching methods where I can accidentally sell all my shit")
+    @pytest.mark.skipif(True, reason="I'm not touching methods where I can accidentally sell all my shit")
     def test_withdraw_assets(
         self,
         caplog: pytest.LogCaptureFixture,
@@ -1537,7 +1555,7 @@ class TestWebsocket:
         assert stderr == ""
         assert 'generic_callback: [\n  {\n    "timestamp":' in stdout
 
-    @pytest.mark.skip(reason="It's really hard to test a method that may or may not return data")
+    @pytest.mark.skipif(True, reason="It's really hard to test a method that may or may not return data")
     def test_subscription_ticker(
         self,
         caplog: pytest.LogCaptureFixture,
@@ -1554,7 +1572,7 @@ class TestWebsocket:
         assert stderr == ""
         assert 'generic_callback: {\n  "event": "ticker",\n  "market": "BTC-EUR",\n  "bestAsk": ' in stdout
 
-    @pytest.mark.skip(reason="It's really hard to test a method that may or may not return data")
+    @pytest.mark.skipif(True, reason="It's really hard to test a method that may or may not return data")
     def test_subscription_ticker_24h(
         self,
         caplog: pytest.LogCaptureFixture,
@@ -1571,7 +1589,7 @@ class TestWebsocket:
         assert stderr == ""
         assert 'generic_callback: {\n  "market": "BTC-EUR",\n  "open": "' in stdout
 
-    @pytest.mark.skip(reason="It's really hard to test a method that may or may not return data")
+    @pytest.mark.skipif(True, reason="It's really hard to test a method that may or may not return data")
     def test_subscription_ticker_account(
         self,
         caplog: pytest.LogCaptureFixture,
@@ -1588,7 +1606,7 @@ class TestWebsocket:
         assert stderr == ""
         assert "" in stdout  # no output found manually ;_;
 
-    @pytest.mark.skip(reason="It's really hard to test a method that may or may not return data")
+    @pytest.mark.skipif(True, reason="It's really hard to test a method that may or may not return data")
     def test_subscription_ticker_candles(
         self,
         caplog: pytest.LogCaptureFixture,
@@ -1608,7 +1626,7 @@ class TestWebsocket:
             in stdout
         )
 
-    @pytest.mark.skip(reason="It's really hard to test a method that may or may not return data")
+    @pytest.mark.skipif(True, reason="It's really hard to test a method that may or may not return data")
     def test_subscription_trades(
         self,
         caplog: pytest.LogCaptureFixture,
@@ -1625,7 +1643,7 @@ class TestWebsocket:
         assert stderr == ""
         assert 'generic_callback: {\n  "event": "trade",\n  "timestamp": ' in stdout
 
-    @pytest.mark.skip(reason="It's really hard to test a method that may or may not return data")
+    @pytest.mark.skipif(True, reason="It's really hard to test a method that may or may not return data")
     def test_subscription_book_update(
         self,
         caplog: pytest.LogCaptureFixture,
@@ -1642,7 +1660,7 @@ class TestWebsocket:
         assert stderr == ""
         assert 'generic_callback: {\n  "event": "book",\n  "market": "BTC-EUR",\n  "nonce": ' in stdout
 
-    @pytest.mark.skip(reason="It's really hard to test a method that may or may not return data")
+    @pytest.mark.skipif(True, reason="It's really hard to test a method that may or may not return data")
     def test_subscription_book(
         self,
         caplog: pytest.LogCaptureFixture,

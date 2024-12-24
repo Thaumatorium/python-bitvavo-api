@@ -1,5 +1,49 @@
 # Changelog
 
+$UNRELEASED
+
+Turns out the settings weren't working as expected, so I switched
+`python-decouple` out from `pydantic-settings`, which (once setup) works a lot
+smoother. Keywords being "once setup", because holy smokes is it a paint to do
+the initial setup - figure out how the hell you need to validate values before
+or after, etc.
+
+Just don't forget to create a local `.env` with `BITVAVO_APIKEY` and
+`BITVAVO_APISECRET` keys.
+
+### Added
+
+- `pydantic-settings`: a powerful and modern way of loading your settings.
+  - we're using `.env` here, but it can be setup for `.json` or `.yaml` -
+    whatever you fancy.
+  - because of `pydantic-settings` you can now also do
+    `Bitvavo(bitvavo_settings.model_dump())`, and import bitvavo_settings from
+    `settings.py`
+- add pydantic plugin for mypy, so mypy stops complaining about pydantic.
+- vscode settings to disable `pytest-cov` during debugging. If you do not
+  disable `pytest-cov` during debugging, it still silently break your debugging
+  system...
+- you can now import BitvavoApiUpgradedSettings and BitvavoSettings directly
+  from `bitvavo_api_upgraded`
+
+### Changed
+
+- `python-decouple` replaced by `pydantic-settings` - see Added and Removed
+- `pytest-cov` relegated to enable coverage via vscode - friendship with
+  `pytest-cov` ended. `coverage.py` is my best friend.
+  - reason for this is because `pytest-cov` fucked with the ability to debug
+    within vscode.
+- bump minor Python versions
+
+### Removed
+
+- `python-decouple` - this lacked type hinting since forever, not to mention it
+  didn't throw errors if missing...
+
+### Fixed
+
+- a bunch of tests that have VERY flaky output from the API >:(
+
 ## v1.17.0 - 2024-11-24
 
 Integrate all changes from Bitvavo's `v1.1.1` to `v1.4.2` lib versions,

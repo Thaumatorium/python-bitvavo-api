@@ -14,7 +14,7 @@ from structlog.stdlib import get_logger
 from websocket import WebSocketApp  # missing stubs for WebSocketApp
 
 from bitvavo_api_upgraded.helper_funcs import configure_loggers, time_ms, time_to_wait
-from bitvavo_api_upgraded.settings import BITVAVO_API_UPGRADED
+from bitvavo_api_upgraded.settings import bitvavo_upgraded_settings
 from bitvavo_api_upgraded.type_aliases import anydict, errordict, intdict, ms, s_f, strdict, strintdict
 
 configure_loggers()
@@ -332,7 +332,7 @@ class Bitvavo:
         list[list[str]]
         ```
         """
-        if (self.rateLimitRemaining - rateLimitingWeight) <= BITVAVO_API_UPGRADED.RATE_LIMITING_BUFFER:
+        if (self.rateLimitRemaining - rateLimitingWeight) <= bitvavo_upgraded_settings.RATE_LIMITING_BUFFER:
             self.sleep_until_can_continue()
         if self.debugging:
             logger.debug(
@@ -344,7 +344,7 @@ class Bitvavo:
                 },
             )
         if self.APIKEY != "":
-            now = time_ms() + BITVAVO_API_UPGRADED.LAG
+            now = time_ms() + bitvavo_upgraded_settings.LAG
             sig = createSignature(now, "GET", url.replace(self.base, ""), None, self.APISECRET)
             headers = {
                 "bitvavo-access-key": self.APIKEY,
@@ -391,10 +391,10 @@ class Bitvavo:
         list[list[str]]
         ```
         """
-        if (self.rateLimitRemaining - rateLimitingWeight) <= BITVAVO_API_UPGRADED.RATE_LIMITING_BUFFER:
+        if (self.rateLimitRemaining - rateLimitingWeight) <= bitvavo_upgraded_settings.RATE_LIMITING_BUFFER:
             self.sleep_until_can_continue()
         # if this method breaks: add `= {}` after `body: dict`
-        now = time_ms() + BITVAVO_API_UPGRADED.LAG
+        now = time_ms() + bitvavo_upgraded_settings.LAG
         sig = createSignature(now, method, (endpoint + postfix), body, self.APISECRET)
         url = self.base + endpoint + postfix
         headers = {
@@ -1832,7 +1832,7 @@ class Bitvavo:
                     self.subscriptionBook(market, self.callbacks["subscriptionBookUser"][market])
 
         def on_open(self, ws: Any) -> None:  # noqa: ARG002
-            now = time_ms() + BITVAVO_API_UPGRADED.LAG
+            now = time_ms() + bitvavo_upgraded_settings.LAG
             self.open = True
             self.reconnectTimer = 0.5
             if self.APIKEY != "":

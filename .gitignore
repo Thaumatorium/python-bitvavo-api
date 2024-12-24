@@ -1,6 +1,7 @@
 /*
 
 # dirs
+!.vscode/
 !.github/
 !requirements/
 !scripts/

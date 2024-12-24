@@ -8,24 +8,14 @@ from typing import Any
 import pytest
 
 from bitvavo_api_upgraded.bitvavo import Bitvavo
-from bitvavo_api_upgraded.settings import BITVAVO
+from bitvavo_api_upgraded.settings import bitvavo_settings
 
 logger = logging.getLogger("conftest")
 
 
 @pytest.fixture(scope="session")
 def bitvavo() -> Bitvavo:
-    return Bitvavo(
-        {
-            # create a file called .env and put the keys there
-            "APIKEY": BITVAVO.APIKEY,
-            "APISECRET": BITVAVO.APISECRET,
-            "RESTURL": BITVAVO.RESTURL,
-            "WSURL": BITVAVO.WSURL,
-            "ACCESSWINDOW": BITVAVO.ACCESSWINDOW,
-            "DEBUGGING": BITVAVO.DEBUGGING,
-        },
-    )
+    return Bitvavo(bitvavo_settings.model_dump())
 
 
 @pytest.fixture(scope="session")
@@ -34,17 +24,7 @@ def websocket(bitvavo: Bitvavo) -> Bitvavo.WebSocketAppFacade:
         msg = f"Error callback: {error}"
         logger.error(msg)
 
-    bitvavo = Bitvavo(
-        {
-            # create a file called .env and put the keys there
-            "APIKEY": BITVAVO.APIKEY,
-            "APISECRET": BITVAVO.APISECRET,
-            "RESTURL": BITVAVO.RESTURL,
-            "WSURL": BITVAVO.WSURL,
-            "ACCESSWINDOW": BITVAVO.ACCESSWINDOW,
-            "DEBUGGING": BITVAVO.DEBUGGING,
-        },
-    )
+    bitvavo = Bitvavo(bitvavo_settings.model_dump())
 
     websocket: Bitvavo.WebSocketAppFacade = bitvavo.newWebsocket()
     websocket.setErrorCallback(errorCallback)
@@ -58,18 +38,13 @@ def wrap_public_request(monkeypatch: pytest.MonkeyPatch, bitvavo: Bitvavo) -> No
     bit and is now generating output that doesn't conform to my tests, but since
     I presume that this output does not matter - typically it contains markets
     that are not in use anymore - I can remove them.
+
+    2024-12-24: I kinda fixed the tests, so this may not be necessary anymore.
+    Maybe.
     """
     # Market exceptions to remove, as of 2024-11-11
     market_exceptions = [
-        "BABYDOGE-EUR",
-        "PEAQ-EUR",
-        "UXLINK-EUR",
-        "KLAY-EUR",
-        "ORN-EUR",
-        "DEGEN-EUR",
-        "EUROC-USDC",
-        "PNUT-EUR",
-        "SYS-EUR",
+        "BABYDOGE-EUR",  # left as example
     ]
     original_public_request = bitvavo.publicRequest
 

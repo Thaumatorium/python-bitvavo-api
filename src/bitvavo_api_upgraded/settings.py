@@ -1,47 +1,70 @@
 import logging
 from pathlib import Path
 
-from decouple import AutoConfig, Choices
+from pydantic import Field, field_validator, model_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from bitvavo_api_upgraded.type_aliases import ms
 
-# don't use/import python-decouple's `config`` variable, because the search_path isn't set,
-# which means applications that use a .env file can't override these variables :(
-config = AutoConfig(search_path=Path.cwd())
 
-
-class _BitvavoApiUpgraded:
-    # default LOG_LEVEL is WARNING, so users don't get their ass spammed.
-    LOG_LEVEL: str = config(
-        "BITVAVO_API_UPGRADED_LOG_LEVEL",
-        default="INFO",
-        cast=Choices(list(logging._nameToLevel.keys())),  # noqa: SLF001
-    )
-    LOG_EXTERNAL_LEVEL: str = config(
-        "BITVAVO_API_UPGRADED_EXTERNAL_LOG_LEVEL",
-        default="WARNING",
-        cast=Choices(list(logging._nameToLevel.keys())),  # noqa: SLF001
-    )
-    LAG: ms = config("BITVAVO_API_UPGRADED_LAG", default=ms(50), cast=ms)
-    RATE_LIMITING_BUFFER: int = config("BITVAVO_API_UPGRADED_RATE_LIMITING_BUFFER", default=25, cast=int)
-
-
-class _Bitvavo:
+class BitvavoApiUpgradedSettings(BaseSettings):
     """
-    Changeable variables are handled by the decouple lib, anything else is just static, because they are based on
-    Bitvavo's documentation and thus should not be able to be set outside of the application.
+    These settings provide extra functionality. Originally I wanted to combine
+    then, but I figured that would be a bad idea.
     """
 
-    ACCESSWINDOW: int = config("BITVAVO_ACCESSWINDOW", default=10_000, cast=int)
-    API_RATING_LIMIT_PER_MINUTE: int = 1000
-    API_RATING_LIMIT_PER_SECOND: float = API_RATING_LIMIT_PER_MINUTE / 60
-    APIKEY: str = config("BITVAVO_APIKEY", default="BITVAVO_APIKEY is missing")
-    APISECRET: str = config("BITVAVO_APISECRET", default="BITVAVO_APISECRET is missing")
-    DEBUGGING: bool = config("BITVAVO_DEBUGGING", default=False, cast=bool)
-    RESTURL: str = "https://api.bitvavo.com/v2"
-    WSURL: str = "wss://ws.bitvavo.com/v2/"
+    LOG_LEVEL: str = Field("INFO")
+    LOG_EXTERNAL_LEVEL: str = Field("WARNING")
+    LAG: ms = Field(ms(50))
+    RATE_LIMITING_BUFFER: int = Field(25)
+
+    # Configuration for Pydantic Settings
+    model_config = SettingsConfigDict(
+        env_file=Path.cwd() / ".env",
+        env_file_encoding="utf-8",
+        env_prefix="BITVAVO_API_UPGRADED_",
+        extra="ignore",
+    )
+
+    @classmethod
+    @field_validator("LOG_LEVEL", "LOG_EXTERNAL_LEVEL", mode="before")
+    def validate_log_level(cls, v: str) -> str:
+        if v not in logging._nameToLevel:  # noqa: SLF001
+            msg = f"Invalid log level: {v}"
+            raise ValueError(msg)
+        return v
 
 
-# Just import these variables to use the settings :)
-BITVAVO_API_UPGRADED = _BitvavoApiUpgraded()
-BITVAVO = _Bitvavo()
+class BitvavoSettings(BaseSettings):
+    """
+    These are the base settings from the original library.
+    """
+
+    ACCESSWINDOW: int = Field(10_000)
+    API_RATING_LIMIT_PER_MINUTE: int = Field(default=1000)
+    API_RATING_LIMIT_PER_SECOND: int = Field(default=1000)
+    APIKEY: str = Field(default="BITVAVO_APIKEY is missing")
+    APISECRET: str = Field(default="BITVAVO_APISECRET is missing")
+    DEBUGGING: bool = Field(default=False)
+    RESTURL: str = Field(default="https://api.bitvavo.com/v2")
+    WSURL: str = Field(default="wss://ws.bitvavo.com/v2/")
+
+    # Configuration for Pydantic Settings
+    model_config = SettingsConfigDict(
+        env_file=Path.cwd() / ".env",
+        env_file_encoding="utf-8",
+        env_prefix="BITVAVO_",
+        extra="ignore",
+    )
+
+    @model_validator(mode="after")
+    def set_api_rating_limit_per_second(self) -> "BitvavoSettings":
+        self.API_RATING_LIMIT_PER_SECOND = self.API_RATING_LIMIT_PER_SECOND // 60
+        return self
+
+
+# Initialize the settings
+bitvavo_upgraded_settings = BitvavoApiUpgradedSettings()
+BITVAVO_API_UPGRADED = bitvavo_upgraded_settings
+bitvavo_settings = BitvavoSettings()
+BITVAVO = bitvavo_settings
