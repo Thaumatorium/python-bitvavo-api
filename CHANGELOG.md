@@ -1,6 +1,6 @@
 # Changelog
 
-$UNRELEASED
+v1.17.1 - 2024-12-24
 
 Turns out the settings weren't working as expected, so I switched
 `python-decouple` out from `pydantic-settings`, which (once setup) works a lot
